@@ -1,0 +1,155 @@
+---
+// All Tags - Neo-Brutalism Guideline
+import PublicLayout from "../../layouts/PublicLayout.astro";
+import { pb } from "../../lib/pb";
+
+let tags = [];
+let error = null;
+
+try {
+    tags = await pb.collection("tags").getFullList({
+        sort: "-prompt_count",
+    });
+} catch (e) {
+    console.error(e);
+    error = "Không thể kết nối đến server.";
+}
+
+const totalPrompts = tags.reduce(
+    (sum: number, tag: any) => sum + tag.prompt_count,
+    0,
+);
+---
+
+<PublicLayout title="Tất cả Tags">
+    <div class="container tags-page">
+        <header class="page-header">
+            <span class="page-badge">Browse</span>
+            <h1>Khám phá theo Tags</h1>
+            <p class="page-desc">{tags.length} tags · {totalPrompts} prompts</p>
+        </header>
+
+        {
+            error ? (
+                <div class="alert alert-error">{error}</div>
+            ) : (
+                <div class="tags-grid">
+                    {tags.map((tag: any) => (
+                        <a href={`/tags/${tag.slug}`} class="tag-card">
+                            <span class="tag-icon">#</span>
+                            <div class="tag-info">
+                                <h3>{tag.name}</h3>
+                                {tag.description && <p>{tag.description}</p>}
+                            </div>
+                            <span class="tag-count">{tag.prompt_count}</span>
+                        </a>
+                    ))}
+                </div>
+            )
+        }
+    </div>
+</PublicLayout>
+
+<style>
+    .tags-page {
+        padding: var(--space-xl) 0 var(--space-3xl);
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: var(--space-2xl);
+    }
+
+    .page-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        background: var(--accent-primary);
+        color: white;
+        font-family: var(--font-display);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-md);
+    }
+
+    .page-desc {
+        color: var(--text-muted);
+    }
+
+    .tags-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--space-md);
+    }
+
+    .tag-card {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        padding: var(--space-md);
+        background: white;
+        border: var(--border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: var(--transition-fast);
+    }
+
+    .tag-card:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: var(--shadow-md);
+        text-decoration: none;
+    }
+
+    [data-theme="dark"] .tag-card {
+        background: var(--bg-secondary);
+    }
+
+    .tag-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: var(--accent-primary);
+        color: white;
+        border-radius: var(--radius-md);
+        font-size: 1.25rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .tag-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tag-info h3 {
+        font-size: 1rem;
+        margin: 0;
+        text-transform: capitalize;
+    }
+
+    .tag-info p {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .tag-count {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--accent-primary);
+    }
+
+    @media (max-width: 640px) {
+        .tags-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

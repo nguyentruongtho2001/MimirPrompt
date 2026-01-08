@@ -1,0 +1,741 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Thêm Prompt mới" activeMenu="prompts">
+    <div class="form-container">
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <form id="promptForm" class="prompt-form">
+            <div class="form-grid">
+                <!-- Left Column -->
+                <div class="form-column">
+                    <div class="card">
+                        <h3 class="card-title">Thông tin cơ bản</h3>
+
+                        <div class="form-group">
+                            <label class="form-label" for="caseNumber"
+                                >Case Number</label
+                            >
+                            <input
+                                type="number"
+                                id="caseNumber"
+                                class="form-input"
+                                placeholder="VD: 857"
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="title"
+                                >Tiêu đề *</label
+                            >
+                            <input
+                                type="text"
+                                id="title"
+                                class="form-input"
+                                placeholder="Nhập tiêu đề prompt"
+                                required
+                            />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Ảnh gốc (Full-size)</label
+                            >
+                            <div class="upload-area" id="sourceUploadArea">
+                                <input
+                                    type="file"
+                                    id="sourceFile"
+                                    accept="image/*"
+                                    class="file-input"
+                                />
+                                <div
+                                    class="upload-placeholder"
+                                    id="sourcePlaceholder"
+                                >
+                                    <svg
+                                        width="40"
+                                        height="40"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                    >
+                                        <path
+                                            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+                                        ></path>
+                                        <polyline points="17 8 12 3 7 8"
+                                        ></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"
+                                        ></line>
+                                    </svg>
+                                    <span
+                                        >Ảnh hiển thị khi xem chi tiết prompt</span
+                                    >
+                                </div>
+                                <img
+                                    id="sourcePreview"
+                                    class="upload-preview hidden"
+                                />
+                            </div>
+                            <input type="hidden" id="sourceUrl" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Trạng thái</label>
+                        <label class="toggle">
+                            <input type="checkbox" id="isHidden" />
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">Ẩn prompt này</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="form-column">
+                <div class="card">
+                    <h3 class="card-title">Nội dung Prompt</h3>
+
+                    <div class="form-group">
+                        <label class="form-label" for="promptText"
+                            >Prompt Text *</label
+                        >
+                        <textarea
+                            id="promptText"
+                            class="form-input prompt-textarea"
+                            placeholder="Nhập nội dung prompt..."
+                            required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="promptCount"
+                            >Số lượng prompt</label
+                        >
+                        <input
+                            type="number"
+                            id="promptCount"
+                            class="form-input"
+                            value="1"
+                            min="1"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Tags</label>
+                        <div class="tags-select" id="tagsContainer">
+                            <div class="selected-tags" id="selectedTags"></div>
+                            <select id="tagsDropdown" class="form-input">
+                                <option value="">-- Chọn tag --</option>
+                            </select>
+                        </div>
+                        <input type="hidden" id="selectedTagIds" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Tác giả</label>
+                        <select id="authorId" class="form-input">
+                            <option value="">-- Chọn tác giả --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- Actions -->
+        <div class="form-actions">
+            <a href="/admin/prompts" class="btn btn-secondary">
+                <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Quay lại
+            </a>
+            <button type="submit" class="btn btn-primary" id="saveBtn">
+                <span class="btn-text">
+                    <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path
+                            d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
+                        ></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Lưu Prompt
+                </span>
+                <span class="btn-loader hidden">
+                    <svg
+                        class="spinner-icon"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            stroke-width="3"
+                            fill="none"
+                            opacity="0.25"></circle>
+                        <path
+                            d="M12 2a10 10 0 0 1 10 10"
+                            stroke="currentColor"
+                            stroke-width="3"
+                            fill="none"
+                            stroke-linecap="round"></path>
+                    </svg>
+                </span>
+            </button>
+        </div>
+    </div>
+</AdminLayout>
+
+<style>
+    .form-container {
+        max-width: 1000px;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-column .card {
+        height: 100%;
+    }
+
+    .card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .prompt-textarea {
+        min-height: 250px;
+        font-family: "Fira Code", monospace;
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+
+    /* Toggle Switch */
+    .toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+    }
+
+    .toggle input {
+        display: none;
+    }
+
+    .toggle-slider {
+        width: 48px;
+        height: 24px;
+        background: var(--bg-hover);
+        border-radius: 12px;
+        position: relative;
+        transition: var(--transition);
+    }
+
+    .toggle-slider::before {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        transition: var(--transition);
+    }
+
+    .toggle input:checked + .toggle-slider {
+        background: var(--warning);
+    }
+
+    .toggle input:checked + .toggle-slider::before {
+        transform: translateX(24px);
+    }
+
+    .toggle-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    /* Actions */
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn-loader {
+        display: flex;
+        align-items: center;
+    }
+
+    .spinner-icon {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    /* Upload Area */
+    .upload-area {
+        position: relative;
+        border: 2px dashed var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition);
+        background: var(--bg-dark);
+    }
+
+    .upload-area:hover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    .upload-area.dragover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    .file-input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .upload-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+    }
+
+    .upload-placeholder svg {
+        opacity: 0.5;
+    }
+
+    .upload-placeholder span {
+        font-size: 0.875rem;
+    }
+
+    .upload-preview {
+        max-width: 100%;
+        max-height: 150px;
+        object-fit: contain;
+        border-radius: var(--radius-sm);
+    }
+
+    .upload-area.has-image {
+        padding: 0.5rem;
+        border-style: solid;
+    }
+
+    /* Tags Select */
+    .tags-select {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .selected-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        min-height: 32px;
+    }
+
+    .tag-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        background: rgba(99, 102, 241, 0.2);
+        color: var(--primary-light);
+        border-radius: 4px;
+    }
+
+    .tag-badge button {
+        background: none;
+        border: none;
+        color: currentColor;
+        cursor: pointer;
+        padding: 0;
+        font-size: 1rem;
+        line-height: 1;
+        opacity: 0.7;
+    }
+
+    .tag-badge button:hover {
+        opacity: 1;
+    }
+
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    const API_URL = "http://localhost:2992/api";
+    const token = localStorage.getItem("token");
+
+    // Show alert
+    function showAlert(message: string, type: "success" | "error") {
+        const container = document.getElementById("alertContainer");
+        if (!container) return;
+
+        const icon =
+            type === "success"
+                ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+                : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+
+        container.innerHTML = `
+      <div class="alert alert-${type}">
+        ${icon}
+        <span>${message}</span>
+      </div>
+    `;
+
+        if (type === "error") {
+            setTimeout(() => {
+                container.innerHTML = "";
+            }, 5000);
+        }
+    }
+
+    // Upload file function
+    async function uploadFile(file: File): Promise<string | null> {
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+            const response = await fetch(`${API_URL}/upload`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                body: formData,
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return data.url;
+            } else {
+                const error = await response.json();
+                showAlert(error.error || "Upload thất bại", "error");
+                return null;
+            }
+        } catch (error) {
+            showAlert("Lỗi kết nối server", "error");
+            return null;
+        }
+    }
+
+    // Setup file upload handlers
+    function setupUpload(
+        fileInputId: string,
+        previewId: string,
+        placeholderId: string,
+        hiddenInputId: string,
+        areaId: string,
+    ) {
+        const fileInput = document.getElementById(
+            fileInputId,
+        ) as HTMLInputElement;
+        const preview = document.getElementById(previewId) as HTMLImageElement;
+        const placeholder = document.getElementById(placeholderId);
+        const hiddenInput = document.getElementById(
+            hiddenInputId,
+        ) as HTMLInputElement;
+        const area = document.getElementById(areaId);
+
+        if (!fileInput || !preview || !placeholder || !hiddenInput || !area)
+            return;
+
+        // Handle file selection
+        fileInput.addEventListener("change", async () => {
+            const file = fileInput.files?.[0];
+            if (!file) return;
+
+            // Show preview immediately
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target?.result as string;
+                preview.classList.remove("hidden");
+                placeholder.classList.add("hidden");
+                area.classList.add("has-image");
+            };
+            reader.readAsDataURL(file);
+
+            // Upload to server
+            const url = await uploadFile(file);
+            if (url) {
+                hiddenInput.value = url;
+            }
+        });
+
+        // Drag and drop
+        area.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            area.classList.add("dragover");
+        });
+
+        area.addEventListener("dragleave", () => {
+            area.classList.remove("dragover");
+        });
+
+        area.addEventListener("drop", async (e) => {
+            e.preventDefault();
+            area.classList.remove("dragover");
+
+            const file = (e as DragEvent).dataTransfer?.files[0];
+            if (file && file.type.startsWith("image/")) {
+                // Trigger change event by setting files
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInput.files = dt.files;
+                fileInput.dispatchEvent(new Event("change"));
+            }
+        });
+    }
+
+    // Initialize uploads (source image only - thumbnail auto-generated)
+    setupUpload(
+        "sourceFile",
+        "sourcePreview",
+        "sourcePlaceholder",
+        "sourceUrl",
+        "sourceUploadArea",
+    );
+
+    // ===== Tags & Authors Loading =====
+    let allTags: any[] = [];
+    let selectedTagIds: number[] = [];
+
+    // Load tags
+    async function loadTags() {
+        try {
+            const response = await fetch(`${API_URL}/tags`);
+            const data = await response.json();
+            allTags = Array.isArray(data) ? data : data.data || [];
+
+            const dropdown = document.getElementById(
+                "tagsDropdown",
+            ) as HTMLSelectElement;
+            if (dropdown) {
+                dropdown.innerHTML =
+                    '<option value="">-- Chọn tag --</option>' +
+                    allTags
+                        .map(
+                            (t) => `<option value="${t.id}">${t.name}</option>`,
+                        )
+                        .join("");
+            }
+        } catch (error) {
+            console.error("Error loading tags:", error);
+        }
+    }
+
+    // Load authors
+    async function loadAuthors() {
+        try {
+            const response = await fetch(`${API_URL}/authors`);
+            const data = await response.json();
+            const authors = Array.isArray(data) ? data : data.data || [];
+
+            const dropdown = document.getElementById(
+                "authorId",
+            ) as HTMLSelectElement;
+            if (dropdown) {
+                dropdown.innerHTML =
+                    '<option value="">-- Chọn tác giả --</option>' +
+                    authors
+                        .map(
+                            (a) =>
+                                `<option value="${a.id}">@${a.username || a.name} (${a.prompt_count} prompts)</option>`,
+                        )
+                        .join("");
+            }
+        } catch (error) {
+            console.error("Error loading authors:", error);
+        }
+    }
+
+    // Render selected tags
+    function renderSelectedTags() {
+        const container = document.getElementById("selectedTags");
+        if (!container) return;
+
+        container.innerHTML = selectedTagIds
+            .map((id) => {
+                const tag = allTags.find((t) => t.id === id);
+                return tag
+                    ? `<span class="tag-badge">${tag.name}<button type="button" onclick="removeTag(${id})">×</button></span>`
+                    : "";
+            })
+            .join("");
+
+        // Update hidden input
+        (document.getElementById("selectedTagIds") as HTMLInputElement).value =
+            selectedTagIds.join(",");
+    }
+
+    // Add tag when selected
+    document.getElementById("tagsDropdown")?.addEventListener("change", (e) => {
+        const select = e.target as HTMLSelectElement;
+        const tagId = parseInt(select.value);
+
+        if (tagId && !selectedTagIds.includes(tagId)) {
+            selectedTagIds.push(tagId);
+            renderSelectedTags();
+        }
+
+        select.value = ""; // Reset dropdown
+    });
+
+    // Remove tag
+    (window as any).removeTag = (id: number) => {
+        selectedTagIds = selectedTagIds.filter((t) => t !== id);
+        renderSelectedTags();
+    };
+
+    // Initialize
+    loadTags();
+    loadAuthors();
+
+    // Handle form submit
+    document
+        .getElementById("promptForm")
+        ?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const saveBtn = document.getElementById("saveBtn");
+            const btnText = saveBtn?.querySelector(".btn-text");
+            const btnLoader = saveBtn?.querySelector(".btn-loader");
+
+            const data = {
+                case_number:
+                    parseInt(
+                        (
+                            document.getElementById(
+                                "caseNumber",
+                            ) as HTMLInputElement
+                        ).value,
+                    ) || 0,
+                title: (document.getElementById("title") as HTMLInputElement)
+                    .value,
+                prompt_text: (
+                    document.getElementById("promptText") as HTMLTextAreaElement
+                ).value,
+                source_url: (
+                    document.getElementById("sourceUrl") as HTMLInputElement
+                ).value,
+                // Use source image as thumbnail (will be auto-resized on frontend display)
+                thumbnail: (
+                    document.getElementById("sourceUrl") as HTMLInputElement
+                ).value,
+                is_hidden: (
+                    document.getElementById("isHidden") as HTMLInputElement
+                ).checked,
+                prompt_count:
+                    parseInt(
+                        (
+                            document.getElementById(
+                                "promptCount",
+                            ) as HTMLInputElement
+                        ).value,
+                    ) || 1,
+                tags: selectedTagIds
+                    .map((id) => {
+                        const tag = allTags.find((t: any) => t.id === id);
+                        return tag?.slug || "";
+                    })
+                    .filter(Boolean),
+                author_id:
+                    parseInt(
+                        (
+                            document.getElementById(
+                                "authorId",
+                            ) as HTMLSelectElement
+                        ).value,
+                    ) || null,
+            };
+
+            if (!data.title || !data.prompt_text) {
+                showAlert(
+                    "Vui lòng điền đầy đủ tiêu đề và nội dung prompt!",
+                    "error",
+                );
+                return;
+            }
+
+            // Show loading
+            if (btnText) btnText.classList.add("hidden");
+            if (btnLoader) btnLoader.classList.remove("hidden");
+
+            try {
+                const response = await fetch(`${API_URL}/prompts`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (response.ok) {
+                    showAlert("Tạo prompt thành công!", "success");
+                    setTimeout(() => {
+                        window.location.href = "/admin/prompts";
+                    }, 1500);
+                } else {
+                    const result = await response.json();
+                    showAlert(result.error || "Tạo prompt thất bại!", "error");
+                }
+            } catch (error) {
+                showAlert("Lỗi kết nối server!", "error");
+            } finally {
+                if (btnText) btnText.classList.remove("hidden");
+                if (btnLoader) btnLoader.classList.add("hidden");
+            }
+        });
+</script>

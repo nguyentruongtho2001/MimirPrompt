@@ -1,0 +1,407 @@
+---
+// Homepage - Neo-Brutalism Guideline
+import PublicLayout from "../layouts/PublicLayout.astro";
+import PromptCard from "../components/PromptCard.astro";
+import Pagination from "../components/Pagination.astro";
+import { pb } from "../lib/pb";
+
+const url = Astro.url;
+const page = parseInt(url.searchParams.get("page") || "1");
+const search = url.searchParams.get("q") || "";
+const perPage = 20;
+
+let prompts = [];
+let total = 0;
+let totalPages = 0;
+let popularTags = [];
+let error = null;
+
+try {
+	// 1. Get Prompts
+	const filter = search
+		? `title ~ "${search}" || prompt_text ~ "${search}"`
+		: "";
+
+	const result = await pb.collection("prompts").getList(page, perPage, {
+		filter,
+		sort: "-case_number",
+		expand: "tags",
+	});
+
+	prompts = result.items;
+	total = result.totalItems;
+	totalPages = result.totalPages;
+
+	// 2. Get Popular Tags
+	// Using cache for tags if possible, or simple query
+	const tagsResult = await pb.collection("tags").getList(1, 8, {
+		sort: "-prompt_count",
+	});
+	popularTags = tagsResult.items;
+} catch (e: any) {
+	console.error(e);
+	error = "Không thể kết nối đến server.";
+}
+
+const baseUrl = search ? `/?q=${encodeURIComponent(search)}` : "/";
+---
+
+<PublicLayout title={search ? `Tìm kiếm: ${search}` : "Trang chủ"}>
+	<!-- Hero Section -->
+	<section class="hero">
+		<div class="container hero-inner">
+			<h1 class="hero-title">Khám phá AI Prompts tuyệt vời</h1>
+			<p class="hero-desc">
+				Bộ sưu tập {total}+ prompts được tuyển chọn cho Nano Banana
+			</p>
+
+			<!-- Search -->
+			<form action="/" method="GET" class="search-form">
+				<div class="search-box">
+					<input
+						type="text"
+						name="q"
+						placeholder="Tìm kiếm prompts..."
+						value={search}
+						class="search-input"
+					/>
+					<button type="submit" class="search-btn">
+						<svg
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2.5"
+						>
+							<circle cx="11" cy="11" r="8"></circle>
+							<path d="M21 21l-4.35-4.35"></path>
+						</svg>
+					</button>
+				</div>
+			</form>
+		</div>
+	</section>
+
+	<!-- Main Layout -->
+	<div class="container main-layout">
+		<!-- Content -->
+		<section class="content">
+			{error && <div class="alert alert-error">{error}</div>}
+
+			{
+				search && (
+					<div class="search-result">
+						<h2>
+							Kết quả: "<span class="highlight">{search}</span>"
+						</h2>
+						<p>{total} prompts tìm thấy</p>
+						<a href="/" class="btn btn-sm btn-secondary">
+							✕ Xóa bộ lọc
+						</a>
+					</div>
+				)
+			}
+
+			{
+				prompts.length > 0 ? (
+					<>
+						<div class="prompts-grid">
+							{prompts.map((prompt: any) => (
+								<PromptCard
+									id={prompt.id}
+									title={prompt.title}
+									thumbnail={prompt.thumbnail}
+									tags={prompt.expand?.tags}
+								/>
+							))}
+						</div>
+						<Pagination
+							currentPage={page}
+							totalPages={totalPages}
+							baseUrl={baseUrl}
+						/>
+					</>
+				) : (
+					<div class="empty-state">
+						<span class="empty-icon">🔍</span>
+						<h3>Không tìm thấy kết quả</h3>
+						<p>Thử tìm kiếm với từ khóa khác</p>
+						<a href="/" class="btn btn-primary">
+							Xem tất cả prompts
+						</a>
+					</div>
+				)
+			}
+		</section>
+
+		<!-- Sidebar -->
+		<aside class="sidebar">
+			<div class="sidebar-card">
+				<h3 class="sidebar-title">Popular Tags</h3>
+				<div class="tag-list">
+					{
+						popularTags.map((tag: any) => (
+							<a href={`/tags/${tag.slug}`} class="tag-link">
+								<span class="tag-name">{tag.name}</span>
+								<span class="tag-count">
+									{tag.prompt_count}
+								</span>
+							</a>
+						))
+					}
+				</div>
+				<a href="/tags" class="view-all">Xem tất cả tags →</a>
+			</div>
+		</aside>
+	</div>
+</PublicLayout>
+
+<style>
+	/* Hero */
+	.hero {
+		padding: var(--space-3xl) 0 var(--space-2xl);
+		text-align: center;
+	}
+
+	.hero-inner {
+		max-width: 680px;
+		margin: 0 auto;
+	}
+
+	.hero-badge {
+		display: inline-block;
+		padding: 6px 14px;
+		background: var(--accent-primary);
+		color: white;
+		font-family: var(--font-display);
+		font-size: 0.75rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		border-radius: var(--radius-md);
+		margin-bottom: var(--space-lg);
+	}
+
+	.hero-title {
+		font-size: 2.75rem;
+		margin-bottom: var(--space-md);
+	}
+
+	.hero-desc {
+		font-size: 1.0625rem;
+		margin-bottom: var(--space-xl);
+	}
+
+	/* Search */
+	.search-form {
+		max-width: 480px;
+		margin: 0 auto;
+	}
+
+	.search-box {
+		display: flex;
+		border: var(--border);
+		border-radius: var(--radius-md);
+		box-shadow: var(--shadow-md);
+		overflow: hidden;
+		background: white;
+	}
+
+	[data-theme="dark"] .search-box {
+		background: var(--bg-secondary);
+	}
+
+	.search-input {
+		flex: 1;
+		padding: 14px 16px;
+		font-size: 1rem;
+		border: none;
+		background: transparent;
+		color: var(--text-primary);
+	}
+
+	.search-input:focus {
+		outline: none;
+	}
+
+	.search-input::placeholder {
+		color: var(--text-muted);
+	}
+
+	.search-btn {
+		padding: 0 20px;
+		background: var(--accent-primary);
+		border: none;
+		color: white;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		transition: var(--transition-fast);
+	}
+
+	.search-btn:hover {
+		background: var(--accent-primary-hover);
+	}
+
+	/* Main Layout */
+	.main-layout {
+		display: grid;
+		grid-template-columns: 1fr 280px;
+		gap: var(--space-xl);
+		padding: var(--space-xl) 0 var(--space-3xl);
+		align-items: start;
+	}
+
+	.content {
+		min-width: 0;
+	}
+
+	/* Search Result */
+	.search-result {
+		margin-bottom: var(--space-xl);
+		padding-bottom: var(--space-lg);
+		border-bottom: 1px solid var(--bg-secondary);
+	}
+
+	.search-result h2 {
+		margin-bottom: var(--space-xs);
+	}
+
+	.search-result p {
+		margin-bottom: var(--space-md);
+		font-size: 0.875rem;
+	}
+
+	/* Prompts Grid */
+	.prompts-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-lg);
+	}
+
+	/* Empty State */
+	.empty-state {
+		text-align: center;
+		padding: var(--space-3xl) var(--space-xl);
+		background: var(--bg-secondary);
+		border-radius: var(--radius-md);
+	}
+
+	.empty-icon {
+		font-size: 3rem;
+		display: block;
+		margin-bottom: var(--space-md);
+	}
+
+	.empty-state h3 {
+		margin-bottom: var(--space-sm);
+	}
+
+	.empty-state p {
+		margin-bottom: var(--space-lg);
+	}
+
+	/* Sidebar */
+	.sidebar {
+		position: sticky;
+		top: 80px;
+	}
+
+	.sidebar-card {
+		background: white;
+		border: var(--border);
+		border-radius: var(--radius-md);
+		box-shadow: var(--shadow-md);
+		padding: var(--space-md);
+	}
+
+	[data-theme="dark"] .sidebar-card {
+		background: var(--bg-secondary);
+	}
+
+	.sidebar-title {
+		font-size: 0.9375rem;
+		margin-bottom: var(--space-md);
+		padding-bottom: var(--space-sm);
+		border-bottom: var(--border);
+	}
+
+	.tag-list {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		margin-bottom: var(--space-md);
+	}
+
+	.tag-link {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 10px 12px;
+		background: var(--bg-secondary);
+		border-radius: var(--radius-md);
+		font-size: 0.875rem;
+		color: var(--text-primary);
+		transition: var(--transition-fast);
+	}
+
+	.tag-link:hover {
+		background: var(--accent-primary);
+		color: white;
+		text-decoration: none;
+	}
+
+	[data-theme="dark"] .tag-link {
+		background: rgba(255, 255, 255, 0.1);
+	}
+
+	.tag-name {
+		font-weight: 500;
+		text-transform: capitalize;
+	}
+
+	.tag-count {
+		font-size: 0.75rem;
+		opacity: 0.7;
+	}
+
+	.view-all {
+		display: block;
+		text-align: center;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: var(--accent-primary);
+	}
+
+	/* Responsive */
+	@media (max-width: 1024px) {
+		.main-layout {
+			grid-template-columns: 1fr;
+		}
+
+		.sidebar {
+			position: static;
+		}
+
+		.prompts-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	@media (max-width: 768px) {
+		.hero-title {
+			font-size: 2rem;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.prompts-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.hero {
+			padding: var(--space-2xl) 0 var(--space-xl);
+		}
+	}
+</style>

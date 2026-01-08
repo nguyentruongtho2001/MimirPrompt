@@ -1,0 +1,444 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Lịch sử thay đổi" activeMenu="audit">
+    <!-- Filters -->
+    <div class="filters-bar">
+        <div class="filter-group">
+            <select id="entityTypeFilter" class="form-input filter-select">
+                <option value="">Tất cả loại</option>
+                <option value="prompt">Prompt</option>
+                <option value="tag">Tag</option>
+                <option value="author">Tác giả</option>
+                <option value="category">Danh mục</option>
+            </select>
+            <select id="actionFilter" class="form-input filter-select">
+                <option value="">Tất cả thao tác</option>
+                <option value="CREATE">Tạo mới</option>
+                <option value="UPDATE">Cập nhật</option>
+                <option value="DELETE">Xóa</option>
+            </select>
+            <button class="btn btn-secondary" id="refreshBtn">
+                <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <path d="M23 4v6h-6"></path>
+                    <path d="M1 20v-6h6"></path>
+                    <path
+                        d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+                    ></path>
+                </svg>
+                Làm mới
+            </button>
+        </div>
+    </div>
+
+    <!-- Audit Log Table -->
+    <div class="card">
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Thời gian</th>
+                        <th>Thao tác</th>
+                        <th>Loại</th>
+                        <th>Nội dung</th>
+                        <th>Người thực hiện</th>
+                    </tr>
+                </thead>
+                <tbody id="auditTableBody">
+                    <tr>
+                        <td colspan="5" class="text-center text-muted"
+                            >Đang tải...</td
+                        >
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination"></div>
+    </div>
+</AdminLayout>
+
+<style>
+    .filters-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .filter-select {
+        width: 180px;
+    }
+
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table th {
+        background: var(--bg-hover);
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .data-table td {
+        font-size: 0.875rem;
+    }
+
+    .data-table tbody tr:hover {
+        background: var(--bg-hover);
+    }
+
+    .action-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .action-badge.create {
+        background: rgba(16, 185, 129, 0.2);
+        color: var(--success);
+    }
+
+    .action-badge.update {
+        background: rgba(99, 102, 241, 0.2);
+        color: var(--primary-light);
+    }
+
+    .action-badge.delete {
+        background: rgba(239, 68, 68, 0.2);
+        color: var(--error);
+    }
+
+    .entity-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        background: var(--bg-hover);
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    .entity-title {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .user-avatar-small {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.625rem;
+        font-weight: 600;
+        color: white;
+    }
+
+    .time-ago {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .page-btn {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border-color);
+        background: var(--bg-dark);
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .page-btn:hover:not(:disabled) {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .page-btn.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    .page-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .page-info {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .empty-row {
+        text-align: center;
+        color: var(--text-muted);
+        padding: 3rem !important;
+    }
+</style>
+
+<script>
+    const API_URL = "http://localhost:2992/api";
+    const token = localStorage.getItem("token");
+
+    let currentPage = 1;
+    const perPage = 20;
+
+    // Format time ago
+    function timeAgo(date: Date): string {
+        const seconds = Math.floor(
+            (new Date().getTime() - date.getTime()) / 1000,
+        );
+
+        if (seconds < 60) return "Vừa xong";
+        if (seconds < 3600) return `${Math.floor(seconds / 60)} phút trước`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ trước`;
+        if (seconds < 604800)
+            return `${Math.floor(seconds / 86400)} ngày trước`;
+
+        return date.toLocaleDateString("vi-VN");
+    }
+
+    // Get action icon
+    function getActionIcon(action: string): string {
+        switch (action) {
+            case "CREATE":
+                return "➕";
+            case "UPDATE":
+                return "✏️";
+            case "DELETE":
+                return "🗑️";
+            default:
+                return "📝";
+        }
+    }
+
+    // Get action text
+    function getActionText(action: string): string {
+        switch (action) {
+            case "CREATE":
+                return "Tạo mới";
+            case "UPDATE":
+                return "Cập nhật";
+            case "DELETE":
+                return "Xóa";
+            default:
+                return action;
+        }
+    }
+
+    // Get entity text
+    function getEntityText(type: string): string {
+        switch (type) {
+            case "prompt":
+                return "Prompt";
+            case "tag":
+                return "Tag";
+            case "author":
+                return "Tác giả";
+            case "category":
+                return "Danh mục";
+            default:
+                return type;
+        }
+    }
+
+    // Load audit logs
+    async function loadAuditLogs() {
+        const tbody = document.getElementById("auditTableBody");
+        if (!tbody) return;
+
+        const entityType = (
+            document.getElementById("entityTypeFilter") as HTMLSelectElement
+        ).value;
+        const action = (
+            document.getElementById("actionFilter") as HTMLSelectElement
+        ).value;
+
+        let url = `${API_URL}/audit-logs?page=${currentPage}&per_page=${perPage}`;
+        if (entityType) url += `&entity_type=${entityType}`;
+        if (action) url += `&action=${action}`;
+
+        try {
+            const response = await fetch(url, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (!response.ok) {
+                tbody.innerHTML =
+                    '<tr><td colspan="5" class="empty-row">Không có quyền xem lịch sử</td></tr>';
+                return;
+            }
+
+            const result = await response.json();
+            const logs = result.data || [];
+
+            if (logs.length === 0) {
+                tbody.innerHTML =
+                    '<tr><td colspan="5" class="empty-row">Chưa có lịch sử thay đổi</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs
+                .map(
+                    (log: any) => `
+                <tr>
+                    <td>
+                        <div>${new Date(log.created_at).toLocaleString("vi-VN")}</div>
+                        <span class="time-ago">${timeAgo(new Date(log.created_at))}</span>
+                    </td>
+                    <td>
+                        <span class="action-badge ${log.action.toLowerCase()}">
+                            ${getActionIcon(log.action)} ${getActionText(log.action)}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="entity-badge">${getEntityText(log.entity_type)}</span>
+                    </td>
+                    <td>
+                        <div class="entity-title" title="${log.entity_title || ""}">${log.entity_title || `ID: ${log.entity_id}`}</div>
+                    </td>
+                    <td>
+                        <div class="user-info">
+                            <span class="user-avatar-small">${(log.username || "A").charAt(0).toUpperCase()}</span>
+                            <span>${log.username || "Admin"}</span>
+                        </div>
+                    </td>
+                </tr>
+            `,
+                )
+                .join("");
+
+            // Update pagination
+            renderPagination(result.page, result.total_pages, result.total);
+        } catch (error) {
+            tbody.innerHTML =
+                '<tr><td colspan="5" class="empty-row">Lỗi tải dữ liệu</td></tr>';
+        }
+    }
+
+    // Render pagination
+    function renderPagination(page: number, totalPages: number, total: number) {
+        const pagination = document.getElementById("pagination");
+        if (!pagination) return;
+
+        if (totalPages <= 1) {
+            pagination.innerHTML = `<span class="page-info">Hiển thị ${total} kết quả</span>`;
+            return;
+        }
+
+        let html = `
+            <button class="page-btn" ${page <= 1 ? "disabled" : ""} data-page="${page - 1}">←</button>
+        `;
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (
+                i === 1 ||
+                i === totalPages ||
+                (i >= page - 1 && i <= page + 1)
+            ) {
+                html += `<button class="page-btn ${i === page ? "active" : ""}" data-page="${i}">${i}</button>`;
+            } else if (i === page - 2 || i === page + 2) {
+                html += `<span class="page-info">...</span>`;
+            }
+        }
+
+        html += `
+            <button class="page-btn" ${page >= totalPages ? "disabled" : ""} data-page="${page + 1}">→</button>
+            <span class="page-info">(${total} kết quả)</span>
+        `;
+
+        pagination.innerHTML = html;
+
+        // Add event listeners
+        pagination.querySelectorAll(".page-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const newPage = parseInt(btn.getAttribute("data-page") || "1");
+                if (newPage !== currentPage) {
+                    currentPage = newPage;
+                    loadAuditLogs();
+                }
+            });
+        });
+    }
+
+    // Event listeners
+    document
+        .getElementById("entityTypeFilter")
+        ?.addEventListener("change", () => {
+            currentPage = 1;
+            loadAuditLogs();
+        });
+
+    document.getElementById("actionFilter")?.addEventListener("change", () => {
+        currentPage = 1;
+        loadAuditLogs();
+    });
+
+    document
+        .getElementById("refreshBtn")
+        ?.addEventListener("click", loadAuditLogs);
+
+    // Initialize
+    loadAuditLogs();
+</script>

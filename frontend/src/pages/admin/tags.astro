@@ -1,0 +1,669 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Quản lý Tags" activeMenu="tags">
+    <!-- Header Actions -->
+    <div class="page-header">
+        <div class="search-box">
+            <svg
+                class="search-icon"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input
+                type="text"
+                id="searchInput"
+                class="search-input"
+                placeholder="Tìm kiếm tags..."
+            />
+        </div>
+        <button class="btn btn-primary" id="addTagBtn">
+            <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Thêm Tag
+        </button>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
+
+    <!-- Tags Table -->
+    <div class="card">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên Tag</th>
+                        <th>Slug</th>
+                        <th>Mô tả</th>
+                        <th>Số prompts</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="tagsTable">
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <div class="loading-state">
+                                <div class="spinner"></div>
+                                <p>Đang tải...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add/Edit Tag Modal -->
+    <div id="tagModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Thêm Tag mới</h3>
+                <button class="modal-close" id="closeModal">
+                    <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form id="tagForm">
+                <input type="hidden" id="tagId" value="" />
+                <div class="form-group">
+                    <label class="form-label" for="tagName">Tên Tag *</label>
+                    <input
+                        type="text"
+                        id="tagName"
+                        class="form-input"
+                        placeholder="VD: Photography"
+                        required
+                    />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="tagSlug">Slug</label>
+                    <input
+                        type="text"
+                        id="tagSlug"
+                        class="form-input"
+                        placeholder="VD: photography (tự động tạo nếu để trống)"
+                    />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="tagDescription">Mô tả</label>
+                    <textarea
+                        id="tagDescription"
+                        class="form-input"
+                        placeholder="Mô tả ngắn về tag này..."
+                        rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        id="cancelBtn">Hủy</button
+                    >
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        <span class="btn-text">Lưu</span>
+                        <span class="btn-loader hidden">
+                            <svg
+                                class="spinner-icon"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    stroke-width="3"
+                                    fill="none"
+                                    opacity="0.25"></circle>
+                                <path
+                                    d="M12 2a10 10 0 0 1 10 10"
+                                    stroke="currentColor"
+                                    stroke-width="3"
+                                    fill="none"
+                                    stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Xác nhận xóa</h3>
+            </div>
+            <p class="modal-body">
+                Bạn có chắc chắn muốn xóa tag "<span id="deleteTagName"
+                ></span>"? Các prompts liên quan sẽ không bị xóa.
+            </p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancelDelete">Hủy</button>
+                <button class="btn btn-danger" id="confirmDelete">Xóa</button>
+            </div>
+        </div>
+    </div>
+</AdminLayout>
+
+<style>
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+    }
+
+    .search-box {
+        position: relative;
+        flex: 1;
+        max-width: 400px;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 3rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 0.9375rem;
+        transition: var(--transition);
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .search-input::placeholder {
+        color: var(--text-muted);
+    }
+
+    /* Table Styles */
+    .tag-name {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .tag-slug {
+        font-family: "Fira Code", monospace;
+        font-size: 0.8125rem;
+        color: var(--primary-light);
+        background: rgba(99, 102, 241, 0.1);
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-sm);
+    }
+
+    .tag-description {
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .tag-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        background: linear-gradient(
+            135deg,
+            rgba(99, 102, 241, 0.15),
+            rgba(236, 72, 153, 0.15)
+        );
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--primary-light);
+    }
+
+    .actions-cell {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* Loading State */
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 3rem;
+    }
+
+    /* Modal */
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.25rem;
+        transition: var(--transition-fast);
+    }
+
+    .modal-close:hover {
+        color: var(--text-primary);
+    }
+
+    .modal-body {
+        margin-bottom: 1.5rem;
+        color: var(--text-secondary);
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .btn-loader {
+        display: flex;
+        align-items: center;
+    }
+
+    .spinner-icon {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    /* Modal Overlay - MUST be fixed position */
+    .modal-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 99999 !important;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.hidden {
+        display: none !important;
+    }
+
+    .modal {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        border-radius: 12px !important;
+        padding: 1.5rem !important;
+        width: 90% !important;
+        max-width: 500px !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5) !important;
+    }
+</style>
+
+<script>
+    const API_URL = "http://localhost:2992/api";
+    const token = localStorage.getItem("token");
+
+    let allTags: any[] = [];
+    let deleteTagId: number | null = null;
+    let deleteTagName: string = "";
+
+    // Show alert
+    function showAlert(message: string, type: "success" | "error") {
+        const container = document.getElementById("alertContainer");
+        if (!container) return;
+
+        const icon =
+            type === "success"
+                ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+                : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+
+        container.innerHTML = `
+      <div class="alert alert-${type}">
+        ${icon}
+        <span>${message}</span>
+      </div>
+    `;
+
+        setTimeout(() => {
+            container.innerHTML = "";
+        }, 5000);
+    }
+
+    // Render tags table
+    function renderTags(tags: any[]) {
+        const tableBody = document.getElementById("tagsTable");
+        if (!tableBody) return;
+
+        if (tags.length === 0) {
+            tableBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center text-muted" style="padding: 3rem;">
+            Chưa có tags nào
+          </td>
+        </tr>
+      `;
+            return;
+        }
+
+        tableBody.innerHTML = tags
+            .map(
+                (tag: any) => `
+      <tr>
+        <td><span class="badge">#${tag.id}</span></td>
+        <td><span class="tag-name">${tag.name}</span></td>
+        <td><span class="tag-slug">${tag.slug}</span></td>
+        <td>
+          <div class="tag-description" title="${tag.description || ""}">${tag.description || '<span class="text-muted">—</span>'}</div>
+        </td>
+        <td><span class="tag-count">${tag.prompt_count || 0} prompts</span></td>
+        <td>
+          <div class="actions-cell">
+            <button class="btn btn-secondary btn-sm edit-btn" data-id="${tag.id}" data-name="${tag.name}" data-slug="${tag.slug}" data-description="${tag.description || ""}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Sửa
+            </button>
+            <button class="btn btn-danger btn-sm delete-btn" data-id="${tag.id}" data-name="${tag.name}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              Xóa
+            </button>
+          </div>
+        </td>
+      </tr>
+    `,
+            )
+            .join("");
+
+        // Attach event handlers
+        document.querySelectorAll(".edit-btn").forEach((btn) => {
+            btn.addEventListener("click", () =>
+                openEditModal(btn as HTMLElement),
+            );
+        });
+
+        document.querySelectorAll(".delete-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const el = btn as HTMLElement;
+                deleteTagId = parseInt(el.dataset.id || "0");
+                deleteTagName = el.dataset.name || "";
+                document.getElementById("deleteTagName")!.textContent =
+                    deleteTagName;
+                document
+                    .getElementById("deleteModal")!
+                    .classList.remove("hidden");
+            });
+        });
+    }
+
+    // Load tags
+    async function loadTags() {
+        const tableBody = document.getElementById("tagsTable");
+        if (!tableBody) return;
+
+        tableBody.innerHTML = `
+      <tr>
+        <td colspan="6" class="text-center">
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Đang tải...</p>
+          </div>
+        </td>
+      </tr>
+    `;
+
+        try {
+            const response = await fetch(`${API_URL}/tags`);
+            const data = await response.json();
+            allTags = data.data || [];
+            renderTags(allTags);
+        } catch (error) {
+            console.error("Error loading tags:", error);
+            tableBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center text-muted" style="padding: 3rem;">
+            Lỗi khi tải dữ liệu. Vui lòng thử lại.
+          </td>
+        </tr>
+      `;
+        }
+    }
+
+    // Search tags
+    function filterTags(query: string) {
+        if (!query.trim()) {
+            renderTags(allTags);
+            return;
+        }
+        const filtered = allTags.filter(
+            (tag) =>
+                tag.name.toLowerCase().includes(query.toLowerCase()) ||
+                tag.slug.toLowerCase().includes(query.toLowerCase()) ||
+                (tag.description &&
+                    tag.description
+                        .toLowerCase()
+                        .includes(query.toLowerCase())),
+        );
+        renderTags(filtered);
+    }
+
+    // Open add modal
+    function openAddModal() {
+        document.getElementById("modalTitle")!.textContent = "Thêm Tag mới";
+        document.getElementById("tagId")!.setAttribute("value", "");
+        (document.getElementById("tagName") as HTMLInputElement).value = "";
+        (document.getElementById("tagSlug") as HTMLInputElement).value = "";
+        (
+            document.getElementById("tagDescription") as HTMLTextAreaElement
+        ).value = "";
+        document.getElementById("tagModal")!.classList.remove("hidden");
+    }
+
+    // Open edit modal
+    function openEditModal(btn: HTMLElement) {
+        document.getElementById("modalTitle")!.textContent = "Sửa Tag";
+        document
+            .getElementById("tagId")!
+            .setAttribute("value", btn.dataset.id || "");
+        (document.getElementById("tagName") as HTMLInputElement).value =
+            btn.dataset.name || "";
+        (document.getElementById("tagSlug") as HTMLInputElement).value =
+            btn.dataset.slug || "";
+        (
+            document.getElementById("tagDescription") as HTMLTextAreaElement
+        ).value = btn.dataset.description || "";
+        document.getElementById("tagModal")!.classList.remove("hidden");
+    }
+
+    // Close modals
+    function closeTagModal() {
+        document.getElementById("tagModal")!.classList.add("hidden");
+    }
+
+    function closeDeleteModal() {
+        document.getElementById("deleteModal")!.classList.add("hidden");
+        deleteTagId = null;
+        deleteTagName = "";
+    }
+
+    // Save tag
+    async function saveTag(e: Event) {
+        e.preventDefault();
+
+        const saveBtn = document.getElementById("saveBtn");
+        const btnText = saveBtn?.querySelector(".btn-text");
+        const btnLoader = saveBtn?.querySelector(".btn-loader");
+
+        const id = (document.getElementById("tagId") as HTMLInputElement).value;
+        const name = (document.getElementById("tagName") as HTMLInputElement)
+            .value;
+        const slug = (document.getElementById("tagSlug") as HTMLInputElement)
+            .value;
+        const description = (
+            document.getElementById("tagDescription") as HTMLTextAreaElement
+        ).value;
+
+        if (!name.trim()) {
+            showAlert("Vui lòng nhập tên tag!", "error");
+            return;
+        }
+
+        if (btnText) btnText.classList.add("hidden");
+        if (btnLoader) btnLoader.classList.remove("hidden");
+
+        try {
+            const url = id ? `${API_URL}/tags/${id}` : `${API_URL}/tags`;
+            const method = id ? "PUT" : "POST";
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ name, slug, description }),
+            });
+
+            if (response.ok) {
+                showAlert(
+                    id ? "Cập nhật tag thành công!" : "Thêm tag thành công!",
+                    "success",
+                );
+                closeTagModal();
+                loadTags();
+            } else {
+                const data = await response.json();
+                showAlert(data.error || "Có lỗi xảy ra!", "error");
+            }
+        } catch (error) {
+            showAlert("Lỗi kết nối server!", "error");
+        } finally {
+            if (btnText) btnText.classList.remove("hidden");
+            if (btnLoader) btnLoader.classList.add("hidden");
+        }
+    }
+
+    // Delete tag
+    async function deleteTag() {
+        if (!deleteTagId || !token) return;
+
+        try {
+            const response = await fetch(`${API_URL}/tags/${deleteTagId}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (response.ok) {
+                showAlert("Xóa tag thành công!", "success");
+                closeDeleteModal();
+                loadTags();
+            } else {
+                const data = await response.json();
+                showAlert(data.error || "Xóa thất bại!", "error");
+            }
+        } catch (error) {
+            showAlert("Lỗi kết nối server!", "error");
+        }
+    }
+
+    // Event listeners
+    document.getElementById("searchInput")?.addEventListener("input", (e) => {
+        filterTags((e.target as HTMLInputElement).value);
+    });
+
+    document
+        .getElementById("addTagBtn")
+        ?.addEventListener("click", openAddModal);
+    document
+        .getElementById("closeModal")
+        ?.addEventListener("click", closeTagModal);
+    document
+        .getElementById("cancelBtn")
+        ?.addEventListener("click", closeTagModal);
+    document.getElementById("tagForm")?.addEventListener("submit", saveTag);
+    document
+        .getElementById("cancelDelete")
+        ?.addEventListener("click", closeDeleteModal);
+    document
+        .getElementById("confirmDelete")
+        ?.addEventListener("click", deleteTag);
+
+    document.getElementById("tagModal")?.addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) closeTagModal();
+    });
+    document.getElementById("deleteModal")?.addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) closeDeleteModal();
+    });
+
+    // Initial load
+    loadTags();
+</script>

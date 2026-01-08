@@ -1,0 +1,885 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Quản lý Danh mục" activeMenu="categories">
+    <!-- Header Actions -->
+    <div class="page-header">
+        <div class="search-box">
+            <svg
+                class="search-icon"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input
+                type="text"
+                id="searchInput"
+                class="search-input"
+                placeholder="Tìm kiếm danh mục..."
+            />
+        </div>
+        <button class="btn btn-primary" id="addCategoryBtn">
+            <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Thêm Danh mục
+        </button>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
+
+    <!-- Categories Table -->
+    <div class="card">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Icon</th>
+                        <th>Tên danh mục</th>
+                        <th>Slug</th>
+                        <th>Mô tả</th>
+                        <th>Số prompts</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="categoriesTable">
+                    <tr>
+                        <td colspan="8" class="text-center">
+                            <div class="loading-state">
+                                <div class="spinner"></div>
+                                <p>Đang tải...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add/Edit Category Modal -->
+    <div id="categoryModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Thêm Danh mục mới</h3>
+                <button class="modal-close" id="closeModal">
+                    <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form id="categoryForm">
+                <input type="hidden" id="categoryId" value="" />
+                <div class="form-group">
+                    <label class="form-label" for="categoryName"
+                        >Tên danh mục *</label
+                    >
+                    <input
+                        type="text"
+                        id="categoryName"
+                        class="form-input"
+                        placeholder="VD: AI Art"
+                        required
+                    />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="categorySlug">Slug</label>
+                    <input
+                        type="text"
+                        id="categorySlug"
+                        class="form-input"
+                        placeholder="VD: ai-art (tự động tạo nếu để trống)"
+                    />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="categoryIcon">Icon</label
+                        >
+                        <input
+                            type="text"
+                            id="categoryIcon"
+                            class="form-input"
+                            placeholder="🎨"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="categoryColor"
+                            >Màu sắc</label
+                        >
+                        <input
+                            type="color"
+                            id="categoryColor"
+                            class="form-input color-input"
+                            value="#6366F1"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="categoryOrder"
+                            >Thứ tự</label
+                        >
+                        <input
+                            type="number"
+                            id="categoryOrder"
+                            class="form-input"
+                            value="0"
+                        />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="categoryDescription"
+                        >Mô tả</label
+                    >
+                    <textarea
+                        id="categoryDescription"
+                        class="form-input"
+                        placeholder="Mô tả ngắn về danh mục này..."
+                        rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="toggle">
+                        <input type="checkbox" id="categoryActive" checked />
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Kích hoạt</span>
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        id="cancelBtn">Hủy</button
+                    >
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        <span class="btn-text">Lưu</span>
+                        <span class="btn-loader hidden">
+                            <svg
+                                class="spinner-icon"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    stroke-width="3"
+                                    fill="none"
+                                    opacity="0.25"></circle>
+                                <path
+                                    d="M12 2a10 10 0 0 1 10 10"
+                                    stroke="currentColor"
+                                    stroke-width="3"
+                                    fill="none"
+                                    stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Xác nhận xóa</h3>
+            </div>
+            <p class="modal-body">
+                Bạn có chắc chắn muốn xóa danh mục "<span
+                    id="deleteCategoryName"></span>"? Các prompts trong danh mục
+                này sẽ không bị xóa.
+            </p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancelDelete">Hủy</button>
+                <button class="btn btn-danger" id="confirmDelete">Xóa</button>
+            </div>
+        </div>
+    </div>
+</AdminLayout>
+
+<style>
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+    }
+
+    .search-box {
+        position: relative;
+        flex: 1;
+        max-width: 400px;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 3rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 0.9375rem;
+        transition: var(--transition);
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .search-input::placeholder {
+        color: var(--text-muted);
+    }
+
+    /* Table Styles */
+    .category-icon {
+        font-size: 1.5rem;
+    }
+
+    .category-name {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .category-slug {
+        font-family: "Fira Code", monospace;
+        font-size: 0.8125rem;
+        color: var(--primary-light);
+        background: rgba(99, 102, 241, 0.1);
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-sm);
+    }
+
+    .category-description {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .category-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        background: linear-gradient(
+            135deg,
+            rgba(99, 102, 241, 0.15),
+            rgba(236, 72, 153, 0.15)
+        );
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--primary-light);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .status-active {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--success);
+    }
+
+    .status-inactive {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--warning);
+    }
+
+    .actions-cell {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .color-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 0.5rem;
+    }
+
+    /* Loading State */
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 3rem;
+    }
+
+    /* Modal */
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.25rem;
+        transition: var(--transition-fast);
+    }
+
+    .modal-close:hover {
+        color: var(--text-primary);
+    }
+
+    .modal-body {
+        margin-bottom: 1.5rem;
+        color: var(--text-secondary);
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .color-input {
+        height: 42px;
+        padding: 0.25rem;
+        cursor: pointer;
+    }
+
+    /* Toggle */
+    .toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+    }
+
+    .toggle input {
+        display: none;
+    }
+
+    .toggle-slider {
+        width: 44px;
+        height: 24px;
+        background: var(--bg-hover);
+        border-radius: 12px;
+        position: relative;
+        transition: var(--transition);
+    }
+
+    .toggle-slider::before {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        transition: var(--transition);
+    }
+
+    .toggle input:checked + .toggle-slider {
+        background: var(--success);
+    }
+
+    .toggle input:checked + .toggle-slider::before {
+        transform: translateX(20px);
+    }
+
+    .toggle-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .btn-loader {
+        display: flex;
+        align-items: center;
+    }
+
+    .spinner-icon {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    /* Modal Overlay - MUST be fixed position */
+    .modal-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 99999 !important;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.hidden {
+        display: none !important;
+    }
+
+    .modal {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        border-radius: 12px !important;
+        padding: 1.5rem !important;
+        width: 90% !important;
+        max-width: 500px !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5) !important;
+    }
+</style>
+
+<script>
+    const API_URL = "http://localhost:2992/api";
+    const token = localStorage.getItem("token");
+
+    let allCategories: any[] = [];
+    let deleteCategoryId: number | null = null;
+    let deleteCategoryName: string = "";
+
+    // Show alert
+    function showAlert(message: string, type: "success" | "error") {
+        const container = document.getElementById("alertContainer");
+        if (!container) return;
+
+        const icon =
+            type === "success"
+                ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+                : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+
+        container.innerHTML = `
+      <div class="alert alert-${type}">
+        ${icon}
+        <span>${message}</span>
+      </div>
+    `;
+
+        setTimeout(() => {
+            container.innerHTML = "";
+        }, 5000);
+    }
+
+    // Render categories table
+    function renderCategories(categories: any[]) {
+        const tableBody = document.getElementById("categoriesTable");
+        if (!tableBody) return;
+
+        if (categories.length === 0) {
+            tableBody.innerHTML = `
+        <tr>
+          <td colspan="8" class="text-center text-muted" style="padding: 3rem;">
+            Chưa có danh mục nào
+          </td>
+        </tr>
+      `;
+            return;
+        }
+
+        tableBody.innerHTML = categories
+            .map(
+                (cat: any) => `
+      <tr>
+        <td><span class="badge">#${cat.id}</span></td>
+        <td><span class="category-icon">${cat.icon || "📁"}</span></td>
+        <td>
+          <span class="color-dot" style="background-color: ${cat.color || "#6366F1"}"></span>
+          <span class="category-name">${cat.name}</span>
+        </td>
+        <td><span class="category-slug">${cat.slug}</span></td>
+        <td>
+          <div class="category-description" title="${cat.description || ""}">${cat.description || '<span class="text-muted">—</span>'}</div>
+        </td>
+        <td><span class="category-count">${cat.prompt_count || 0} prompts</span></td>
+        <td>
+          <span class="status-badge ${cat.is_active ? "status-active" : "status-inactive"}">
+            ${cat.is_active ? "Hoạt động" : "Ẩn"}
+          </span>
+        </td>
+        <td>
+          <div class="actions-cell">
+            <button class="btn btn-secondary btn-sm edit-btn" 
+                    data-id="${cat.id}" 
+                    data-name="${cat.name}" 
+                    data-slug="${cat.slug}" 
+                    data-description="${cat.description || ""}"
+                    data-icon="${cat.icon || ""}"
+                    data-color="${cat.color || "#6366F1"}"
+                    data-order="${cat.display_order || 0}"
+                    data-active="${cat.is_active}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Sửa
+            </button>
+            <button class="btn btn-danger btn-sm delete-btn" data-id="${cat.id}" data-name="${cat.name}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              Xóa
+            </button>
+          </div>
+        </td>
+      </tr>
+    `,
+            )
+            .join("");
+
+        // Attach event handlers
+        document.querySelectorAll(".edit-btn").forEach((btn) => {
+            btn.addEventListener("click", () =>
+                openEditModal(btn as HTMLElement),
+            );
+        });
+
+        document.querySelectorAll(".delete-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const el = btn as HTMLElement;
+                deleteCategoryId = parseInt(el.dataset.id || "0");
+                deleteCategoryName = el.dataset.name || "";
+                document.getElementById("deleteCategoryName")!.textContent =
+                    deleteCategoryName;
+                document
+                    .getElementById("deleteModal")!
+                    .classList.remove("hidden");
+            });
+        });
+    }
+
+    // Load categories
+    async function loadCategories() {
+        const tableBody = document.getElementById("categoriesTable");
+        if (!tableBody) return;
+
+        tableBody.innerHTML = `
+      <tr>
+        <td colspan="8" class="text-center">
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Đang tải...</p>
+          </div>
+        </td>
+      </tr>
+    `;
+
+        try {
+            const response = await fetch(`${API_URL}/categories`);
+            const data = await response.json();
+            allCategories = Array.isArray(data) ? data : data.data || [];
+            renderCategories(allCategories);
+        } catch (error) {
+            console.error("Error loading categories:", error);
+            tableBody.innerHTML = `
+        <tr>
+          <td colspan="8" class="text-center text-muted" style="padding: 3rem;">
+            Lỗi khi tải dữ liệu. Vui lòng thử lại.
+          </td>
+        </tr>
+      `;
+        }
+    }
+
+    // Search categories
+    function filterCategories(query: string) {
+        if (!query.trim()) {
+            renderCategories(allCategories);
+            return;
+        }
+        const filtered = allCategories.filter(
+            (cat) =>
+                cat.name.toLowerCase().includes(query.toLowerCase()) ||
+                cat.slug.toLowerCase().includes(query.toLowerCase()) ||
+                (cat.description &&
+                    cat.description
+                        .toLowerCase()
+                        .includes(query.toLowerCase())),
+        );
+        renderCategories(filtered);
+    }
+
+    // Open add modal
+    function openAddModal() {
+        document.getElementById("modalTitle")!.textContent =
+            "Thêm Danh mục mới";
+        document.getElementById("categoryId")!.setAttribute("value", "");
+        (document.getElementById("categoryName") as HTMLInputElement).value =
+            "";
+        (document.getElementById("categorySlug") as HTMLInputElement).value =
+            "";
+        (document.getElementById("categoryIcon") as HTMLInputElement).value =
+            "";
+        (document.getElementById("categoryColor") as HTMLInputElement).value =
+            "#6366F1";
+        (document.getElementById("categoryOrder") as HTMLInputElement).value =
+            "0";
+        (
+            document.getElementById(
+                "categoryDescription",
+            ) as HTMLTextAreaElement
+        ).value = "";
+        (
+            document.getElementById("categoryActive") as HTMLInputElement
+        ).checked = true;
+        document.getElementById("categoryModal")!.classList.remove("hidden");
+    }
+
+    // Open edit modal
+    function openEditModal(btn: HTMLElement) {
+        document.getElementById("modalTitle")!.textContent = "Sửa Danh mục";
+        document
+            .getElementById("categoryId")!
+            .setAttribute("value", btn.dataset.id || "");
+        (document.getElementById("categoryName") as HTMLInputElement).value =
+            btn.dataset.name || "";
+        (document.getElementById("categorySlug") as HTMLInputElement).value =
+            btn.dataset.slug || "";
+        (document.getElementById("categoryIcon") as HTMLInputElement).value =
+            btn.dataset.icon || "";
+        (document.getElementById("categoryColor") as HTMLInputElement).value =
+            btn.dataset.color || "#6366F1";
+        (document.getElementById("categoryOrder") as HTMLInputElement).value =
+            btn.dataset.order || "0";
+        (
+            document.getElementById(
+                "categoryDescription",
+            ) as HTMLTextAreaElement
+        ).value = btn.dataset.description || "";
+        (
+            document.getElementById("categoryActive") as HTMLInputElement
+        ).checked = btn.dataset.active === "true";
+        document.getElementById("categoryModal")!.classList.remove("hidden");
+    }
+
+    // Close modals
+    function closeCategoryModal() {
+        document.getElementById("categoryModal")!.classList.add("hidden");
+    }
+
+    function closeDeleteModal() {
+        document.getElementById("deleteModal")!.classList.add("hidden");
+        deleteCategoryId = null;
+        deleteCategoryName = "";
+    }
+
+    // Save category
+    async function saveCategory(e: Event) {
+        e.preventDefault();
+
+        const saveBtn = document.getElementById("saveBtn");
+        const btnText = saveBtn?.querySelector(".btn-text");
+        const btnLoader = saveBtn?.querySelector(".btn-loader");
+
+        const id = (document.getElementById("categoryId") as HTMLInputElement)
+            .value;
+        const name = (
+            document.getElementById("categoryName") as HTMLInputElement
+        ).value;
+        const slug = (
+            document.getElementById("categorySlug") as HTMLInputElement
+        ).value;
+        const icon = (
+            document.getElementById("categoryIcon") as HTMLInputElement
+        ).value;
+        const color = (
+            document.getElementById("categoryColor") as HTMLInputElement
+        ).value;
+        const displayOrder =
+            parseInt(
+                (document.getElementById("categoryOrder") as HTMLInputElement)
+                    .value,
+            ) || 0;
+        const description = (
+            document.getElementById(
+                "categoryDescription",
+            ) as HTMLTextAreaElement
+        ).value;
+        const isActive = (
+            document.getElementById("categoryActive") as HTMLInputElement
+        ).checked;
+
+        if (!name.trim()) {
+            showAlert("Vui lòng nhập tên danh mục!", "error");
+            return;
+        }
+
+        if (btnText) btnText.classList.add("hidden");
+        if (btnLoader) btnLoader.classList.remove("hidden");
+
+        try {
+            const url = id
+                ? `${API_URL}/categories/${id}`
+                : `${API_URL}/categories`;
+            const method = id ? "PUT" : "POST";
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    name,
+                    slug,
+                    description,
+                    icon,
+                    color,
+                    display_order: displayOrder,
+                    is_active: isActive,
+                }),
+            });
+
+            if (response.ok) {
+                showAlert(
+                    id
+                        ? "Cập nhật danh mục thành công!"
+                        : "Thêm danh mục thành công!",
+                    "success",
+                );
+                closeCategoryModal();
+                loadCategories();
+            } else {
+                const data = await response.json();
+                showAlert(data.error || "Có lỗi xảy ra!", "error");
+            }
+        } catch (error) {
+            showAlert("Lỗi kết nối server!", "error");
+        } finally {
+            if (btnText) btnText.classList.remove("hidden");
+            if (btnLoader) btnLoader.classList.add("hidden");
+        }
+    }
+
+    // Delete category
+    async function deleteCategory() {
+        if (!deleteCategoryId || !token) return;
+
+        try {
+            const response = await fetch(
+                `${API_URL}/categories/${deleteCategoryId}`,
+                {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                },
+            );
+
+            if (response.ok) {
+                showAlert("Xóa danh mục thành công!", "success");
+                closeDeleteModal();
+                loadCategories();
+            } else {
+                const data = await response.json();
+                showAlert(data.error || "Xóa thất bại!", "error");
+            }
+        } catch (error) {
+            showAlert("Lỗi kết nối server!", "error");
+        }
+    }
+
+    // Event listeners
+    document.getElementById("searchInput")?.addEventListener("input", (e) => {
+        filterCategories((e.target as HTMLInputElement).value);
+    });
+
+    document
+        .getElementById("addCategoryBtn")
+        ?.addEventListener("click", openAddModal);
+    document
+        .getElementById("closeModal")
+        ?.addEventListener("click", closeCategoryModal);
+    document
+        .getElementById("cancelBtn")
+        ?.addEventListener("click", closeCategoryModal);
+    document
+        .getElementById("categoryForm")
+        ?.addEventListener("submit", saveCategory);
+    document
+        .getElementById("cancelDelete")
+        ?.addEventListener("click", closeDeleteModal);
+    document
+        .getElementById("confirmDelete")
+        ?.addEventListener("click", deleteCategory);
+
+    document.getElementById("categoryModal")?.addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) closeCategoryModal();
+    });
+    document.getElementById("deleteModal")?.addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) closeDeleteModal();
+    });
+
+    // Initial load
+    loadCategories();
+</script>

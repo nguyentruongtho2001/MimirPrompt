@@ -1,0 +1,612 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Quản lý Tác giả" activeMenu="authors">
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Quản lý Tác giả</h1>
+            <p class="text-muted">Tôn vinh các tác giả đã đóng góp prompts</p>
+        </div>
+        <button class="btn btn-primary" id="addBtn">
+            <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Thêm tác giả
+        </button>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
+
+    <!-- Search -->
+    <div class="search-container">
+        <input
+            type="text"
+            class="form-input"
+            id="searchInput"
+            placeholder="Tìm kiếm theo tên hoặc username..."
+        />
+    </div>
+
+    <!-- Authors Table -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Avatar</th>
+                    <th>Tên</th>
+                    <th>Username</th>
+                    <th>Platform</th>
+                    <th>Profile URL</th>
+                    <th>Số prompts</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="authorsTableBody">
+                <tr>
+                    <td
+                        colspan="8"
+                        class="text-center text-muted"
+                        style="padding: 3rem;"
+                    >
+                        Đang tải...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay hidden" id="authorModal">
+        <div class="modal">
+            <h3 id="modalTitle">Thêm tác giả mới</h3>
+            <form id="authorForm">
+                <input type="hidden" id="authorId" />
+
+                <div class="form-group">
+                    <label class="form-label" for="authorName"
+                        >Tên tác giả *</label
+                    >
+                    <input
+                        type="text"
+                        id="authorName"
+                        class="form-input"
+                        placeholder="Tên hiển thị"
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="authorUsername"
+                        >Username</label
+                    >
+                    <input
+                        type="text"
+                        id="authorUsername"
+                        class="form-input"
+                        placeholder="@username"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="authorPlatform"
+                        >Platform</label
+                    >
+                    <select id="authorPlatform" class="form-input">
+                        <option value="twitter">Twitter/X</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="behance">Behance</option>
+                        <option value="dribbble">Dribbble</option>
+                        <option value="other">Khác</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="authorProfileUrl"
+                        >Profile URL</label
+                    >
+                    <input
+                        type="url"
+                        id="authorProfileUrl"
+                        class="form-input"
+                        placeholder="https://..."
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="authorAvatarUrl"
+                        >Avatar URL</label
+                    >
+                    <input
+                        type="url"
+                        id="authorAvatarUrl"
+                        class="form-input"
+                        placeholder="https://..."
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="authorBio">Tiểu sử</label>
+                    <textarea
+                        id="authorBio"
+                        class="form-input"
+                        rows="3"
+                        placeholder="Mô tả ngắn về tác giả..."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        id="cancelBtn">Hủy</button
+                    >
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay hidden" id="deleteModal">
+        <div class="modal">
+            <h3>Xác nhận xóa</h3>
+            <p class="text-muted">
+                Bạn có chắc chắn muốn xóa tác giả này? Các prompts liên quan sẽ
+                không bị xóa.
+            </p>
+            <input type="hidden" id="deleteAuthorId" />
+            <div class="modal-actions">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="cancelDeleteBtn">Hủy</button
+                >
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    id="confirmDeleteBtn">Xóa</button
+                >
+            </div>
+        </div>
+    </div>
+</AdminLayout>
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .header-content h1 {
+        margin-bottom: 0.25rem;
+    }
+
+    .search-container {
+        margin-bottom: 1.5rem;
+    }
+
+    .search-container .form-input {
+        max-width: 400px;
+    }
+
+    .author-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        background: var(--bg-hover);
+    }
+
+    .author-avatar.placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: var(--text-muted);
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        font-weight: 600;
+    }
+
+    .platform-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: 4px;
+        background: var(--bg-hover);
+        color: var(--text-secondary);
+    }
+
+    .platform-badge.twitter {
+        background: rgba(29, 161, 242, 0.2);
+        color: #1da1f2;
+    }
+
+    .platform-badge.instagram {
+        background: rgba(225, 48, 108, 0.2);
+        color: #e1306c;
+    }
+
+    .prompt-count {
+        font-weight: 600;
+        color: var(--primary-light);
+    }
+
+    .action-btns {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 1.5rem;
+    }
+
+    .profile-link {
+        color: var(--primary-light);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .profile-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Modal Overlay - MUST be fixed position */
+    .modal-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 99999 !important;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.hidden {
+        display: none !important;
+    }
+
+    .modal {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        border-radius: 12px !important;
+        padding: 1.5rem !important;
+        width: 90% !important;
+        max-width: 500px !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .modal h3 {
+        margin: 0 0 1.5rem 0;
+        font-size: 1.25rem;
+        color: #f1f5f9;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        color: #94a3b8;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: #334155;
+        border: 1px solid #475569;
+        border-radius: 8px;
+        color: #f1f5f9;
+        font-size: 0.9375rem;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #6366f1;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+</style>
+
+<script>
+    const API_URL = "http://localhost:2992/api";
+    const token = localStorage.getItem("token");
+
+    let authors: any[] = [];
+
+    // Show alert
+    function showAlert(message: string, type: "success" | "error") {
+        const container = document.getElementById("alertContainer");
+        if (!container) return;
+
+        const icon =
+            type === "success"
+                ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+                : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+
+        container.innerHTML = `<div class="alert alert-${type}">${icon}<span>${message}</span></div>`;
+
+        setTimeout(() => {
+            container.innerHTML = "";
+        }, 4000);
+    }
+
+    // Get initials for avatar placeholder
+    function getInitials(name: string): string {
+        return name
+            .split(" ")
+            .map((w) => w[0])
+            .slice(0, 2)
+            .join("")
+            .toUpperCase();
+    }
+
+    // Truncate long URLs for display
+    function truncateUrl(url: string, maxLength = 30): string {
+        if (!url) return "-";
+        // Remove protocol
+        let display = url.replace(/^https?:\/\//, "");
+        if (display.length > maxLength) {
+            return display.substring(0, maxLength) + "...";
+        }
+        return display;
+    }
+
+    // Load authors
+    async function loadAuthors(search = "") {
+        try {
+            const url = search
+                ? `${API_URL}/authors?search=${encodeURIComponent(search)}`
+                : `${API_URL}/authors`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            authors = Array.isArray(data) ? data : data.data || [];
+            renderTable();
+        } catch (error) {
+            showAlert("Lỗi tải dữ liệu!", "error");
+        }
+    }
+
+    // Render table
+    function renderTable() {
+        const tbody = document.getElementById("authorsTableBody");
+        if (!tbody) return;
+
+        if (authors.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted" style="padding: 3rem;">Chưa có tác giả nào</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = authors
+            .map(
+                (a) => `
+            <tr>
+                <td><span class="badge">ID ${a.id}</span></td>
+                <td>
+                    ${
+                        a.avatar_url
+                            ? `<img src="${a.avatar_url}" class="author-avatar" onerror="this.outerHTML='<div class=\\'author-avatar placeholder\\'>${getInitials(a.name)}</div>'">`
+                            : `<div class="author-avatar placeholder">${getInitials(a.name)}</div>`
+                    }
+                </td>
+                <td><strong>${a.name}</strong></td>
+                <td>${a.username ? `@${a.username}` : "-"}</td>
+                <td><span class="platform-badge ${a.platform}">${a.platform || "twitter"}</span></td>
+                <td>
+                    ${
+                        a.profile_url
+                            ? `<a href="${a.profile_url}" target="_blank" class="profile-link" title="${a.profile_url}">${truncateUrl(a.profile_url)}</a>`
+                            : '<span class="text-muted">-</span>'
+                    }
+                </td>
+                <td><span class="prompt-count">${a.prompt_count || 0}</span></td>
+                <td>
+                    <div class="action-btns">
+                        <button class="btn btn-sm btn-secondary" onclick="editAuthor(${a.id})">Sửa</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteAuthor(${a.id})">Xóa</button>
+                    </div>
+                </td>
+            </tr>
+        `,
+            )
+            .join("");
+    }
+
+    // Open modal for add
+    document.getElementById("addBtn")?.addEventListener("click", () => {
+        document.getElementById("modalTitle")!.textContent = "Thêm tác giả mới";
+        (document.getElementById("authorId") as HTMLInputElement).value = "";
+        (document.getElementById("authorForm") as HTMLFormElement).reset();
+        document.getElementById("authorModal")?.classList.remove("hidden");
+    });
+
+    // Edit author
+    (window as any).editAuthor = (id: number) => {
+        const author = authors.find((a) => a.id === id);
+        if (!author) return;
+
+        document.getElementById("modalTitle")!.textContent = "Sửa tác giả";
+        (document.getElementById("authorId") as HTMLInputElement).value =
+            String(id);
+        (document.getElementById("authorName") as HTMLInputElement).value =
+            author.name || "";
+        (document.getElementById("authorUsername") as HTMLInputElement).value =
+            author.username || "";
+        (document.getElementById("authorPlatform") as HTMLSelectElement).value =
+            author.platform || "twitter";
+        (
+            document.getElementById("authorProfileUrl") as HTMLInputElement
+        ).value = author.profile_url || "";
+        (document.getElementById("authorAvatarUrl") as HTMLInputElement).value =
+            author.avatar_url || "";
+        (document.getElementById("authorBio") as HTMLTextAreaElement).value =
+            author.bio || "";
+
+        document.getElementById("authorModal")?.classList.remove("hidden");
+    };
+
+    // Delete author
+    (window as any).deleteAuthor = (id: number) => {
+        (document.getElementById("deleteAuthorId") as HTMLInputElement).value =
+            String(id);
+        document.getElementById("deleteModal")?.classList.remove("hidden");
+    };
+
+    // Cancel buttons
+    document.getElementById("cancelBtn")?.addEventListener("click", () => {
+        document.getElementById("authorModal")?.classList.add("hidden");
+    });
+
+    document
+        .getElementById("cancelDeleteBtn")
+        ?.addEventListener("click", () => {
+            document.getElementById("deleteModal")?.classList.add("hidden");
+        });
+
+    // Submit form
+    document
+        .getElementById("authorForm")
+        ?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const id = (document.getElementById("authorId") as HTMLInputElement)
+                .value;
+            const data = {
+                name: (
+                    document.getElementById("authorName") as HTMLInputElement
+                ).value,
+                username: (
+                    document.getElementById(
+                        "authorUsername",
+                    ) as HTMLInputElement
+                ).value,
+                platform: (
+                    document.getElementById(
+                        "authorPlatform",
+                    ) as HTMLSelectElement
+                ).value,
+                profile_url: (
+                    document.getElementById(
+                        "authorProfileUrl",
+                    ) as HTMLInputElement
+                ).value,
+                avatar_url: (
+                    document.getElementById(
+                        "authorAvatarUrl",
+                    ) as HTMLInputElement
+                ).value,
+                bio: (
+                    document.getElementById("authorBio") as HTMLTextAreaElement
+                ).value,
+            };
+
+            try {
+                const url = id
+                    ? `${API_URL}/authors/${id}`
+                    : `${API_URL}/authors`;
+                const method = id ? "PUT" : "POST";
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (response.ok) {
+                    showAlert(
+                        id ? "Đã cập nhật tác giả!" : "Đã thêm tác giả mới!",
+                        "success",
+                    );
+                    document
+                        .getElementById("authorModal")
+                        ?.classList.add("hidden");
+                    loadAuthors();
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error || "Có lỗi xảy ra!", "error");
+                }
+            } catch (error) {
+                showAlert("Lỗi kết nối server!", "error");
+            }
+        });
+
+    // Confirm delete
+    document
+        .getElementById("confirmDeleteBtn")
+        ?.addEventListener("click", async () => {
+            const id = (
+                document.getElementById("deleteAuthorId") as HTMLInputElement
+            ).value;
+
+            try {
+                const response = await fetch(`${API_URL}/authors/${id}`, {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                if (response.ok) {
+                    showAlert("Đã xóa tác giả!", "success");
+                    document
+                        .getElementById("deleteModal")
+                        ?.classList.add("hidden");
+                    loadAuthors();
+                } else {
+                    showAlert("Không thể xóa tác giả!", "error");
+                }
+            } catch (error) {
+                showAlert("Lỗi kết nối server!", "error");
+            }
+        });
+
+    // Search
+    let searchTimeout: number;
+    document.getElementById("searchInput")?.addEventListener("input", (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = window.setTimeout(() => {
+            const search = (e.target as HTMLInputElement).value;
+            loadAuthors(search);
+        }, 300);
+    });
+
+    // Initialize
+    loadAuthors();
+</script>

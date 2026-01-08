@@ -1,0 +1,205 @@
+---
+// Prompts by Tag - Neo-Brutalism Guideline
+import PublicLayout from "../../layouts/PublicLayout.astro";
+import PromptCard from "../../components/PromptCard.astro";
+import Pagination from "../../components/Pagination.astro";
+import { pb } from "../../lib/pb";
+
+const { slug } = Astro.params;
+const url = Astro.url;
+const page = parseInt(url.searchParams.get("page") || "1");
+const perPage = 20;
+
+let prompts = [];
+let total = 0;
+let totalPages = 0;
+let tagInfo = null;
+let error = null;
+
+try {
+    // 1. Get Tag Info
+    tagInfo = await pb.collection("tags").getFirstListItem(`slug="${slug}"`);
+
+    // 2. Get Prompts with this Tag
+    const result = await pb.collection("prompts").getList(page, perPage, {
+        filter: `tags.id ?= "${tagInfo.id}"`,
+        sort: "-case_number",
+        expand: "tags",
+    });
+
+    prompts = result.items;
+    total = result.totalItems;
+    totalPages = result.totalPages;
+} catch (e) {
+    console.error(e);
+    error = "Không tìm thấy tag hoặc lỗi server.";
+}
+
+const tagName = tagInfo?.name || slug;
+---
+
+<PublicLayout title={`Tag: ${tagName}`}>
+    <div class="container tag-page">
+        <a href="/tags" class="back-link">← Tất cả tags</a>
+
+        <header class="tag-header">
+            <div class="tag-icon">#</div>
+            <div class="tag-info">
+                <h1>{tagName}</h1>
+                {
+                    tagInfo?.description && (
+                        <p class="tag-desc">{tagInfo.description}</p>
+                    )
+                }
+                <span class="tag-count">{total} prompts</span>
+            </div>
+        </header>
+
+        {
+            error ? (
+                <div class="alert alert-error">{error}</div>
+            ) : prompts.length > 0 ? (
+                <>
+                    <div class="prompts-grid">
+                        {prompts.map((prompt: any) => (
+                            <PromptCard
+                                id={prompt.id}
+                                title={prompt.title}
+                                thumbnail={prompt.thumbnail}
+                                tags={prompt.expand?.tags}
+                            />
+                        ))}
+                    </div>
+                    <Pagination
+                        currentPage={page}
+                        totalPages={totalPages}
+                        baseUrl={`/tags/${slug}`}
+                    />
+                </>
+            ) : (
+                <div class="empty-state">
+                    <span class="empty-icon">📭</span>
+                    <h3>Chưa có prompts</h3>
+                    <p>Tag này chưa có prompts nào</p>
+                    <a href="/" class="btn btn-primary">
+                        ← Về trang chủ
+                    </a>
+                </div>
+            )
+        }
+    </div>
+</PublicLayout>
+
+<style>
+    .tag-page {
+        padding: var(--space-xl) 0 var(--space-3xl);
+    }
+
+    .back-link {
+        display: inline-flex;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        margin-bottom: var(--space-lg);
+    }
+
+    .back-link:hover {
+        color: var(--accent-primary);
+    }
+
+    .tag-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-lg);
+        padding: var(--space-lg);
+        background: white;
+        border: var(--border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-md);
+        margin-bottom: var(--space-xl);
+    }
+
+    [data-theme="dark"] .tag-header {
+        background: var(--bg-secondary);
+    }
+
+    .tag-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        background: var(--accent-primary);
+        color: white;
+        border-radius: var(--radius-md);
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+
+    .tag-info h1 {
+        font-size: 1.5rem;
+        margin: 0 0 4px 0;
+        text-transform: capitalize;
+    }
+
+    .tag-desc {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        margin: 0 0 4px 0;
+    }
+
+    .tag-count {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+    }
+
+    .prompts-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--space-lg);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: var(--space-3xl);
+        background: var(--bg-secondary);
+        border-radius: var(--radius-md);
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: var(--space-md);
+    }
+
+    .empty-state h3 {
+        margin-bottom: var(--space-sm);
+    }
+
+    .empty-state p {
+        margin-bottom: var(--space-lg);
+    }
+
+    @media (max-width: 1200px) {
+        .prompts-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 900px) {
+        .prompts-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .prompts-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .tag-header {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>

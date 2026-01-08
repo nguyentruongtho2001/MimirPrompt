@@ -1,0 +1,12 @@
+# MimirPrompt Robots.txt
+# Allow all crawlers
+
+User-agent: *
+Allow: /
+
+# Block admin pages
+Disallow: /admin
+Disallow: /login
+
+# Sitemap location
+Sitemap: http://localhost:4321/sitemap.xml

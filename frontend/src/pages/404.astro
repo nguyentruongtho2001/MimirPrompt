@@ -1,0 +1,52 @@
+---
+// 404 Page - Neo-Brutalism Style
+import PublicLayout from "../layouts/PublicLayout.astro";
+---
+
+<PublicLayout title="404 - Không tìm thấy">
+    <div class="container error-page">
+        <div class="error-content">
+            <h1 class="error-code">404</h1>
+            <h2 class="error-title">Oops! Trang không tồn tại</h2>
+            <p class="error-desc">
+                Trang bạn đang tìm kiếm có thể đã bị xóa, đổi tên hoặc tạm thời
+                không khả dụng.
+            </p>
+            <a href="/" class="btn btn-primary">← Về trang chủ</a>
+        </div>
+    </div>
+</PublicLayout>
+
+<style>
+    .error-page {
+        min-height: calc(100vh - 64px - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 64px 0;
+    }
+
+    .error-content {
+        text-align: center;
+        max-width: 480px;
+    }
+
+    .error-code {
+        font-size: 8rem;
+        font-weight: 800;
+        line-height: 1;
+        color: var(--accent-primary);
+        margin-bottom: 16px;
+        text-shadow: 6px 6px 0 #1a1a1a;
+    }
+
+    .error-title {
+        font-size: 1.5rem;
+        margin-bottom: 12px;
+    }
+
+    .error-desc {
+        margin-bottom: 32px;
+        font-size: 1rem;
+    }
+</style>

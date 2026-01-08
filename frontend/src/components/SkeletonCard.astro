@@ -1,0 +1,114 @@
+---
+// SkeletonCard - Loading placeholder with Neo-Brutalism style
+---
+
+<div class="skeleton-card">
+    <div class="skeleton-image"></div>
+    <div class="skeleton-body">
+        <div class="skeleton-title"></div>
+        <div class="skeleton-tags">
+            <div class="skeleton-tag"></div>
+            <div class="skeleton-tag"></div>
+            <div class="skeleton-tag"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .skeleton-card {
+        background: white;
+        border: var(--border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+    }
+
+    .skeleton-image {
+        aspect-ratio: 4/3;
+        background: linear-gradient(
+            90deg,
+            var(--bg-secondary) 0%,
+            #e8e8e8 50%,
+            var(--bg-secondary) 100%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-body {
+        padding: var(--space-md);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    .skeleton-title {
+        height: 20px;
+        width: 80%;
+        background: linear-gradient(
+            90deg,
+            var(--bg-secondary) 0%,
+            #e8e8e8 50%,
+            var(--bg-secondary) 100%
+        );
+        background-size: 200% 100%;
+        border-radius: 4px;
+        animation: shimmer 1.5s ease-in-out infinite;
+        animation-delay: 0.1s;
+    }
+
+    .skeleton-tags {
+        display: flex;
+        gap: 6px;
+    }
+
+    .skeleton-tag {
+        height: 24px;
+        width: 60px;
+        background: linear-gradient(
+            90deg,
+            var(--bg-secondary) 0%,
+            #e8e8e8 50%,
+            var(--bg-secondary) 100%
+        );
+        background-size: 200% 100%;
+        border-radius: var(--radius-full);
+        animation: shimmer 1.5s ease-in-out infinite;
+        animation-delay: 0.2s;
+    }
+
+    .skeleton-tag:nth-child(2) {
+        width: 70px;
+        animation-delay: 0.3s;
+    }
+
+    .skeleton-tag:nth-child(3) {
+        width: 50px;
+        animation-delay: 0.4s;
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: -200% 0;
+        }
+        100% {
+            background-position: 200% 0;
+        }
+    }
+
+    [data-theme="dark"] .skeleton-card {
+        background: var(--bg-secondary);
+    }
+
+    [data-theme="dark"] .skeleton-image,
+    [data-theme="dark"] .skeleton-title,
+    [data-theme="dark"] .skeleton-tag {
+        background: linear-gradient(
+            90deg,
+            #2a2a2a 0%,
+            #3a3a3a 50%,
+            #2a2a2a 100%
+        );
+        background-size: 200% 100%;
+    }
+</style>

@@ -1,0 +1,139 @@
+---
+// PromptCard - Neo-Brutalism Guideline
+interface Props {
+    id: number;
+    title: string;
+    thumbnail: string;
+    tags?: { name: string; slug: string }[];
+}
+
+const { id, title, thumbnail, tags = [] } = Astro.props;
+
+// Images are now served statically from public/images
+const imageUrl = thumbnail;
+const displayTitle = title.length > 60 ? title.substring(0, 60) + "..." : title;
+
+const tagColors = [
+    "var(--tag-blue)",
+    "var(--tag-pink)",
+    "var(--tag-mint)",
+    "var(--tag-yellow)",
+    "var(--tag-lavender)",
+    "var(--tag-peach)",
+];
+---
+
+<a href={`/prompt/${id}`} class="prompt-card">
+    <div class="card-image">
+        <img src={imageUrl} alt={title} loading="lazy" decoding="async" />
+        <div class="card-overlay">
+            <span class="overlay-text">Xem chi tiết →</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <h3 class="card-title">{displayTitle}</h3>
+        {
+            tags.length > 0 && (
+                <div class="card-tags">
+                    {tags.slice(0, 3).map((tag, i) => (
+                        <span
+                            class="tag"
+                            style={`background: ${tagColors[i % tagColors.length]}`}
+                        >
+                            {tag.name}
+                        </span>
+                    ))}
+                </div>
+            )
+        }
+    </div>
+</a>
+
+<style>
+    .prompt-card {
+        display: flex;
+        flex-direction: column;
+        background: white;
+        border: var(--border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: var(--transition-fast);
+    }
+
+    .prompt-card:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: var(--shadow-lg);
+        text-decoration: none;
+    }
+
+    [data-theme="dark"] .prompt-card {
+        background: var(--bg-secondary);
+    }
+
+    .card-image {
+        position: relative;
+        aspect-ratio: 4/3;
+        overflow: hidden;
+        border-bottom: var(--border);
+    }
+
+    .card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .prompt-card:hover .card-image img {
+        transform: scale(1.03);
+    }
+
+    .card-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(79, 70, 229, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+
+    .prompt-card:hover .card-overlay {
+        opacity: 1;
+    }
+
+    .overlay-text {
+        color: white;
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .card-body {
+        padding: var(--space-md);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    .card-title {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        line-height: 1.4;
+        margin: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .card-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+</style>

@@ -1,0 +1,71 @@
+---
+// Dynamic Sitemap.xml Generator
+const API_URL = "http://localhost:2992";
+const SITE_URL = "http://localhost:4321"; // Change to production URL
+
+// Fetch all prompts
+let prompts: any[] = [];
+let tags: any[] = [];
+
+try {
+    const promptsRes = await fetch(`${API_URL}/api/prompts?per_page=1000`);
+    const promptsData = await promptsRes.json();
+    prompts = promptsData.data || [];
+
+    const tagsRes = await fetch(`${API_URL}/api/tags`);
+    const tagsData = await tagsRes.json();
+    tags = tagsData.data || [];
+} catch (e) {
+    console.error("Failed to fetch data for sitemap");
+}
+
+const today = new Date().toISOString().split("T")[0];
+
+// Generate XML
+const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <!-- Homepage -->
+    <url>
+        <loc>${SITE_URL}/</loc>
+        <lastmod>${today}</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>
+    
+    <!-- Tags Index -->
+    <url>
+        <loc>${SITE_URL}/tags</loc>
+        <lastmod>${today}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    
+    <!-- Individual Prompts -->
+    ${prompts
+        .map(
+            (p) => `
+    <url>
+        <loc>${SITE_URL}/prompt/${p.id}</loc>
+        <lastmod>${p.updated_at?.split("T")[0] || today}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>`,
+        )
+        .join("")}
+    
+    <!-- Tag Pages -->
+    ${tags
+        .map(
+            (t) => `
+    <url>
+        <loc>${SITE_URL}/tags/${t.slug}</loc>
+        <lastmod>${today}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+    </url>`,
+        )
+        .join("")}
+</urlset>`;
+---
+
+{xml}

@@ -1,0 +1,1547 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Quản lý Prompts" activeMenu="prompts">
+    <!-- Header Actions -->
+    <div class="page-header">
+        <div class="filters-row">
+            <div class="search-box">
+                <svg
+                    class="search-icon"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input
+                    type="text"
+                    id="searchInput"
+                    class="search-input"
+                    placeholder="Tìm kiếm prompts..."
+                />
+            </div>
+            <select id="categoryFilter" class="filter-select">
+                <option value="">Tất cả danh mục</option>
+            </select>
+            <select id="statusFilter" class="filter-select">
+                <option value="">Tất cả trạng thái</option>
+                <option value="visible">Hiển thị</option>
+                <option value="hidden">Ẩn</option>
+            </select>
+        </div>
+        <a href="/admin/prompts/new" class="btn btn-primary">
+            <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Thêm Prompt
+        </a>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
+
+    <!-- Bulk Actions Bar -->
+    <div class="bulk-actions-bar hidden" id="bulkActionsBar">
+        <span class="selected-count"
+            ><span id="selectedCount">0</span> đã chọn</span
+        >
+        <div class="bulk-buttons">
+            <button class="btn btn-secondary btn-sm" id="bulkHideBtn">
+                <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <path
+                        d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                    ></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+                Ẩn
+            </button>
+            <button class="btn btn-secondary btn-sm" id="bulkShowBtn">
+                <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                    ></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                Hiện
+            </button>
+            <button class="btn btn-danger btn-sm" id="bulkDeleteBtn">
+                <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path
+                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                    ></path>
+                </svg>
+                Xóa
+            </button>
+        </div>
+    </div>
+
+    <!-- Prompts Table -->
+    <div class="card">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">
+                            <input
+                                type="checkbox"
+                                id="selectAll"
+                                class="checkbox"
+                            />
+                        </th>
+                        <th
+                            class="sortable"
+                            data-sort="case_number"
+                            style="width: 112px;"
+                        >
+                            Case
+                            <svg
+                                class="sort-icon"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path d="M7 15l5 5 5-5"></path>
+                                <path d="M7 9l5-5 5 5"></path>
+                            </svg>
+                        </th>
+                        <th style="width: 60px;">Hình ảnh</th>
+                        <th class="sortable" data-sort="title">
+                            Tiêu đề
+                            <svg
+                                class="sort-icon"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path d="M7 15l5 5 5-5"></path>
+                                <path d="M7 9l5-5 5 5"></path>
+                            </svg>
+                        </th>
+                        <th>Tác giả</th>
+                        <th
+                            class="sortable"
+                            data-sort="view_count"
+                            style="width: 80px;"
+                        >
+                            Lượt xem
+                            <svg
+                                class="sort-icon"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path d="M7 15l5 5 5-5"></path>
+                                <path d="M7 9l5-5 5 5"></path>
+                            </svg>
+                        </th>
+                        <th style="width: 60px;">Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="promptsTable">
+                    <tr>
+                        <td colspan="8" class="text-center">
+                            <div class="loading-state">
+                                <div class="spinner"></div>
+                                <p>Đang tải...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Xác nhận xóa</h3>
+            </div>
+            <p class="modal-body">
+                Bạn có chắc chắn muốn xóa prompt này? Hành động này không thể
+                hoàn tác.
+            </p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancelDelete">Hủy</button>
+                <button class="btn btn-danger" id="confirmDelete">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="modal-overlay hidden">
+        <div class="modal preview-modal">
+            <div class="modal-header">
+                <h3 id="previewTitle">Chi tiết Prompt</h3>
+                <button class="modal-close" id="closePreview">
+                    <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="preview-content" id="previewContent">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="closePreviewBtn"
+                    >Đóng</button
+                >
+                <a href="#" class="btn btn-primary" id="editPromptBtn"
+                    >Chỉnh sửa</a
+                >
+            </div>
+        </div>
+    </div>
+</AdminLayout>
+
+<style>
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+    }
+
+    .search-box {
+        position: relative;
+        flex: 1;
+        max-width: 400px;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 3rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 0.9375rem;
+        transition: var(--transition);
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .search-input::placeholder {
+        color: var(--text-muted);
+    }
+
+    .filters-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex: 1;
+    }
+
+    .filter-select {
+        padding: 0.75rem 1rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        cursor: pointer;
+        min-width: 160px;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    /* Sortable Headers */
+    .sortable {
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+    .sortable:hover {
+        color: var(--primary-light);
+    }
+
+    .sort-icon {
+        vertical-align: middle;
+        margin-left: 0.25rem;
+        opacity: 0.3;
+        transition: var(--transition);
+    }
+
+    .sortable:hover .sort-icon {
+        opacity: 0.7;
+    }
+
+    .sortable.asc .sort-icon,
+    .sortable.desc .sort-icon {
+        opacity: 1;
+        color: var(--primary);
+    }
+
+    .sortable.asc .sort-icon path:last-child,
+    .sortable.desc .sort-icon path:first-child {
+        opacity: 0.3;
+    }
+
+    /* Table Styles */
+    .prompt-thumbnail {
+        width: 24px !important;
+        height: 24px !important;
+        max-width: 24px !important;
+        max-height: 24px !important;
+        min-width: 24px;
+        min-height: 24px;
+        object-fit: cover;
+        border-radius: 3px;
+        background: var(--bg-hover);
+        border: 1px solid var(--border-color);
+    }
+
+    .prompt-thumbnail.placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: 0.4rem;
+    }
+
+    .case-badge {
+        transition: var(--transition);
+        white-space: nowrap;
+    }
+
+    .case-badge:hover {
+        background: var(--primary);
+        color: white;
+        transform: scale(1.05);
+    }
+
+    td img {
+        max-width: 24px !important;
+        max-height: 24px !important;
+    }
+
+    .prompt-title {
+        font-weight: 500;
+        color: var(--text-primary);
+        max-width: 220px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    th {
+        white-space: nowrap;
+    }
+
+    td {
+        white-space: nowrap;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .status-active {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--success);
+    }
+
+    .status-hidden {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--warning);
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+        cursor: pointer;
+        vertical-align: middle;
+    }
+
+    .toggle-switch input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #f59e0b;
+        border-radius: 24px;
+        transition: 0.3s;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        border-radius: 50%;
+        transition: 0.3s;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: #22c55e;
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(20px);
+    }
+
+    .actions-cell {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+    }
+
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-hover);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .btn-icon:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    .btn-danger-icon:hover {
+        background: var(--error);
+        border-color: var(--error);
+        color: white;
+    }
+
+    /* Loading State */
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 3rem;
+    }
+
+    /* Modal */
+    .modal-header {
+        margin-bottom: 1rem;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+    }
+
+    .modal-body {
+        margin-bottom: 1.5rem;
+        color: var(--text-secondary);
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+    }
+
+    /* Preview Modal */
+    .preview-modal {
+        max-width: 900px;
+        width: 90%;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .preview-modal .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 1rem;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.25rem;
+    }
+
+    .modal-close:hover {
+        color: var(--text-primary);
+    }
+
+    .preview-content {
+        flex: 1;
+        overflow-y: auto;
+        margin: 1rem 0;
+        padding-right: 0.5rem;
+    }
+
+    .preview-layout {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .preview-left {
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .preview-image {
+        width: 200px;
+        height: 200px;
+        object-fit: cover;
+        border-radius: var(--radius-md);
+        background: var(--bg-hover);
+        border: 1px solid var(--border-color);
+    }
+
+    .preview-no-image {
+        width: 200px;
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-hover);
+        border-radius: var(--radius-md);
+        border: 1px dashed var(--border-color);
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .preview-right {
+        flex: 1;
+    }
+
+    .preview-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .preview-info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .preview-info-item.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .info-value {
+        font-size: 0.9375rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .info-value.link {
+        color: var(--primary);
+        text-decoration: none;
+        word-break: break-all;
+    }
+
+    .info-value.link:hover {
+        text-decoration: underline;
+    }
+
+    .preview-prompt-section {
+        background: var(--bg-hover);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0 0 0.75rem 0;
+        font-size: 0.9375rem;
+        color: var(--text-secondary);
+    }
+
+    .preview-prompt-text {
+        background: var(--bg-dark);
+        padding: 1rem;
+        border-radius: var(--radius-md);
+        font-family: "Consolas", "Monaco", monospace;
+        font-size: 0.875rem;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 250px;
+        overflow-y: auto;
+        border: 1px solid var(--border-color);
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    /* Bulk Actions */
+    .bulk-actions-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        background: linear-gradient(
+            135deg,
+            rgba(99, 102, 241, 0.1),
+            rgba(139, 92, 246, 0.1)
+        );
+        border: 1px solid var(--primary);
+        border-radius: var(--radius-md);
+        margin-bottom: 1rem;
+    }
+
+    .selected-count {
+        font-weight: 500;
+        color: var(--primary-light);
+    }
+
+    .bulk-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .checkbox {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--primary);
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        padding: 20px 16px;
+        border-top: 1px solid var(--border-color);
+        flex-wrap: wrap;
+    }
+
+    .pagination-btn {
+        min-width: 40px;
+        height: 40px;
+        padding: 0 14px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        background: var(--bg-card);
+        border: 2px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .pagination-btn:hover:not(:disabled):not(.active) {
+        background: var(--bg-hover);
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .pagination-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: var(--bg-secondary);
+    }
+
+    /* Go to page */
+    .goto-page {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: 16px;
+        padding-left: 16px;
+        border-left: 2px solid var(--border-color);
+    }
+
+    .goto-page label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        white-space: nowrap;
+    }
+
+    .goto-page input {
+        width: 60px;
+        height: 36px;
+        padding: 0 10px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        background: var(--bg-card);
+        border: 2px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-primary);
+        text-align: center;
+    }
+
+    .goto-page input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .goto-page button {
+        height: 36px;
+        padding: 0 14px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        background: var(--primary);
+        border: none;
+        border-radius: 6px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .goto-page button:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+
+    .goto-page button:hover {
+        background: var(--primary-dark);
+    }
+</style>
+
+<script>
+    const API_URL = "http://localhost:2992/api";
+    const BASE_URL = "http://localhost:2992";
+    const token = localStorage.getItem("token");
+
+    let currentPage = 1;
+    let perPage = 10;
+    let deletePromptId: number | null = null;
+    let searchTimeout: number;
+
+    // Sorting state
+    let sortColumn: string = "";
+    let sortDirection: "asc" | "desc" = "asc";
+    let currentPrompts: any[] = [];
+
+    // Sort prompts
+    function sortPrompts(column: string) {
+        if (sortColumn === column) {
+            sortDirection = sortDirection === "asc" ? "desc" : "asc";
+        } else {
+            sortColumn = column;
+            sortDirection = "asc";
+        }
+
+        // Update header styles
+        document.querySelectorAll(".sortable").forEach((th) => {
+            th.classList.remove("asc", "desc");
+            if (th.getAttribute("data-sort") === column) {
+                th.classList.add(sortDirection);
+            }
+        });
+
+        // Sort the data
+        currentPrompts.sort((a, b) => {
+            let valA = a[column];
+            let valB = b[column];
+
+            if (typeof valA === "string") valA = valA.toLowerCase();
+            if (typeof valB === "string") valB = valB.toLowerCase();
+
+            if (valA < valB) return sortDirection === "asc" ? -1 : 1;
+            if (valA > valB) return sortDirection === "asc" ? 1 : -1;
+            return 0;
+        });
+
+        // Re-render table with sorted data
+        renderPromptsTable(currentPrompts);
+    }
+
+    // Show alert
+    function showAlert(message: string, type: "success" | "error") {
+        const container = document.getElementById("alertContainer");
+        if (!container) return;
+
+        const icon =
+            type === "success"
+                ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+                : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+
+        container.innerHTML = `
+      <div class="alert alert-${type}">
+        ${icon}
+        <span>${message}</span>
+      </div>
+    `;
+
+        setTimeout(() => {
+            container.innerHTML = "";
+        }, 5000);
+    }
+
+    // Load categories for filter dropdown
+    async function loadCategories() {
+        try {
+            const response = await fetch(`${API_URL}/categories`);
+            const categories = await response.json();
+            const select = document.getElementById(
+                "categoryFilter",
+            ) as HTMLSelectElement;
+            if (select && Array.isArray(categories)) {
+                categories.forEach((cat: any) => {
+                    const option = document.createElement("option");
+                    option.value = cat.id.toString();
+                    option.textContent = `${cat.icon || "📁"} ${cat.name}`;
+                    select.appendChild(option);
+                });
+            }
+        } catch (e) {
+            console.error("Failed to load categories");
+        }
+    }
+
+    // Get current filter values
+    function getFilters() {
+        return {
+            search:
+                (document.getElementById("searchInput") as HTMLInputElement)
+                    ?.value || "",
+            category:
+                (document.getElementById("categoryFilter") as HTMLSelectElement)
+                    ?.value || "",
+            status:
+                (document.getElementById("statusFilter") as HTMLSelectElement)
+                    ?.value || "",
+        };
+    }
+
+    // Load prompts
+    async function loadPrompts(page = 1, search = "") {
+        const tableBody = document.getElementById("promptsTable");
+        if (!tableBody) return;
+
+        const filters = getFilters();
+        const showHidden =
+            filters.status === "hidden"
+                ? true
+                : filters.status === "visible"
+                  ? false
+                  : null;
+
+        tableBody.innerHTML = `
+      <tr>
+        <td colspan="8" class="text-center">
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Đang tải...</p>
+          </div>
+        </td>
+      </tr>
+    `;
+
+        try {
+            let url = `${API_URL}/prompts?page=${page}&per_page=${perPage}&show_hidden=true`;
+            if (search) {
+                url = `${API_URL}/search?q=${encodeURIComponent(search)}&page=${page}&per_page=${perPage}`;
+            }
+
+            const response = await fetch(url);
+            const data = await response.json();
+            const prompts = data.data || [];
+            currentPrompts = prompts; // Store for sorting
+            const total = data.total || 0;
+            const totalPages = data.total_pages || 1;
+
+            renderPromptsTable(prompts);
+
+            // Render pagination
+            renderPagination(page, totalPages, search);
+        } catch (error) {
+            console.error("Error loading prompts:", error);
+            tableBody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center text-muted" style="padding: 3rem;">
+              Lỗi khi tải dữ liệu
+            </td>
+          </tr>
+        `;
+        }
+    }
+
+    function renderPromptsTable(prompts: any[]) {
+        const tableBody = document.getElementById("promptsTable");
+        if (!tableBody) return;
+
+        if (prompts.length === 0) {
+            tableBody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center text-muted" style="padding: 3rem;">
+              Chưa có prompts nào
+            </td>
+          </tr>
+        `;
+            return;
+        }
+
+        tableBody.innerHTML = prompts
+            .map(
+                (p: any) => `
+          <tr>
+            <td>
+              <input type="checkbox" class="checkbox row-checkbox" data-id="${p.id}" />
+            </td>
+            <td><span class="badge case-badge" data-id="${p.id}" style="cursor: pointer;">Case ${p.case_number || "-"}</span></td>
+            <td style="width: 60px; padding: 0.5rem;">
+              <img src="${p.thumbnail ? (p.thumbnail.startsWith("http") ? p.thumbnail : BASE_URL + p.thumbnail) : ""}" 
+                   alt="${p.title}" 
+                   width="48" height="48"
+                   style="width: 48px; height: 48px; max-width: 48px; max-height: 48px; object-fit: cover; border-radius: 4px; display: ${p.thumbnail ? "block" : "none"};"
+                   onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div style="width: 48px; height: 48px; display: ${p.thumbnail ? "none" : "flex"}; align-items: center; justify-content: center; background: #334155; border-radius: 4px; font-size: 10px; color: #64748b;">N/A</div>
+            </td>
+            <td>
+              <div class="prompt-title" title="${p.title}">${p.title || "Không có tiêu đề"}</div>
+            </td>
+            <td>
+              <span style="color: ${p.author ? "var(--primary)" : "var(--text-muted)"}">
+                ${p.author ? "@" + (p.author.username || p.author.name) : "-"}
+              </span>
+            </td>
+            <td>${p.view_count?.toLocaleString() || 0}</td>
+            <td>
+              <label class="toggle-switch">
+                <input type="checkbox" class="visibility-toggle" data-id="${p.id}" ${p.is_hidden ? "" : "checked"}>
+                <span class="toggle-slider"></span>
+              </label>
+            </td>
+            <td>
+              <div class="actions-cell">
+                <a href="/admin/prompts/edit/${p.id}" class="btn btn-secondary btn-sm">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  Sửa
+                </a>
+                <button class="btn btn-danger btn-sm delete-btn" data-id="${p.id}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                  Xóa
+                </button>
+              </div>
+            </td>
+          </tr>
+        `,
+            )
+            .join("");
+
+        // Attach event handlers
+        document.querySelectorAll(".delete-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+                const id = (e.currentTarget as HTMLElement).dataset.id;
+                if (id) openDeleteModal(parseInt(id));
+            });
+        });
+
+        // Click on case badge to show preview
+        document.querySelectorAll(".case-badge").forEach((badge) => {
+            badge.addEventListener("click", (e) => {
+                const id = (e.currentTarget as HTMLElement).dataset.id;
+                if (id) openPreviewModal(parseInt(id));
+            });
+        });
+
+        // Toggle visibility
+        document.querySelectorAll(".visibility-toggle").forEach((toggle) => {
+            toggle.addEventListener("change", async (e) => {
+                const checkbox = e.target as HTMLInputElement;
+                const id = checkbox.dataset.id;
+                const isVisible = checkbox.checked;
+
+                try {
+                    const response = await fetch(`${API_URL}/prompts/${id}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ is_hidden: !isVisible }),
+                    });
+
+                    if (response.ok) {
+                        showAlert(
+                            isVisible ? "Đã hiển thị prompt" : "Đã ẩn prompt",
+                            "success",
+                        );
+                    } else {
+                        checkbox.checked = !isVisible; // Revert
+                        showAlert("Lỗi cập nhật trạng thái", "error");
+                    }
+                } catch (error) {
+                    checkbox.checked = !isVisible; // Revert
+                    showAlert("Lỗi kết nối server", "error");
+                }
+            });
+        });
+    }
+
+    // Render pagination
+    let totalPagesGlobal = 1;
+    let currentSearchGlobal = "";
+
+    function renderPagination(current: number, total: number, search: string) {
+        const container = document.getElementById("pagination");
+        if (!container || total <= 1) {
+            if (container) container.innerHTML = "";
+            return;
+        }
+
+        totalPagesGlobal = total;
+        currentSearchGlobal = search;
+
+        let html = "";
+
+        // Previous button
+        html += `<button class="pagination-btn" ${current === 1 ? "disabled" : ""} data-page="${current - 1}">← Trước</button>`;
+
+        // Page numbers
+        for (let i = 1; i <= total; i++) {
+            if (
+                i === 1 ||
+                i === total ||
+                (i >= current - 1 && i <= current + 1)
+            ) {
+                html += `<button class="pagination-btn ${i === current ? "active" : ""}" data-page="${i}">${i}</button>`;
+            } else if (i === current - 2 || i === current + 2) {
+                html += `<span style="color: var(--text-muted);">...</span>`;
+            }
+        }
+
+        // Next button
+        html += `<button class="pagination-btn" ${current === total ? "disabled" : ""} data-page="${current + 1}">Sau →</button>`;
+
+        // Go to page input
+        html += `
+            <div class="goto-page">
+                <label>Trang:</label>
+                <input type="number" id="gotoPageInput" min="1" max="${total}" value="${current}" />
+                <span style="color: var(--text-muted); font-size: 0.875rem;">/ ${total}</span>
+                <button id="gotoPageBtn">Go</button>
+            </div>
+        `;
+
+        container.innerHTML = html;
+
+        // Attach handlers for page buttons
+        container.querySelectorAll(".pagination-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+                const page = parseInt(
+                    (e.currentTarget as HTMLElement).dataset.page || "1",
+                );
+                if (page > 0 && page <= total) {
+                    currentPage = page;
+                    loadPrompts(page, search);
+                }
+            });
+        });
+
+        // Go to page handler
+        document
+            .getElementById("gotoPageBtn")
+            ?.addEventListener("click", goToPage);
+        document
+            .getElementById("gotoPageInput")
+            ?.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") goToPage();
+            });
+    }
+
+    function goToPage() {
+        const input = document.getElementById(
+            "gotoPageInput",
+        ) as HTMLInputElement;
+        const page = parseInt(input.value);
+        if (page >= 1 && page <= totalPagesGlobal) {
+            currentPage = page;
+            loadPrompts(page, currentSearchGlobal);
+        }
+    }
+
+    // Preview Modal
+    async function openPreviewModal(id: number) {
+        const modal = document.getElementById("previewModal");
+        const content = document.getElementById("previewContent");
+        const editBtn = document.getElementById(
+            "editPromptBtn",
+        ) as HTMLAnchorElement;
+
+        if (!modal || !content) return;
+
+        modal.classList.remove("hidden");
+        content.innerHTML =
+            '<div class="loading-state"><div class="spinner"></div></div>';
+        editBtn.href = `/admin/prompts/edit/${id}`;
+
+        try {
+            const response = await fetch(`${API_URL}/prompts/${id}`);
+            const prompt = await response.json();
+
+            document.getElementById("previewTitle")!.textContent =
+                prompt.title || "Chi tiết Prompt";
+
+            const statusClass = prompt.is_hidden
+                ? "status-hidden"
+                : "status-active";
+            const statusText = prompt.is_hidden ? "Ẩn" : "Hiển thị";
+            const imgUrl = prompt.thumbnail
+                ? prompt.thumbnail.startsWith("http")
+                    ? prompt.thumbnail
+                    : BASE_URL + prompt.thumbnail
+                : "";
+
+            content.innerHTML = `
+                <div class="preview-layout">
+                    <div class="preview-left">
+                        ${imgUrl ? `<img src="${imgUrl}" class="preview-image" alt="${prompt.title}" onerror="this.parentElement.innerHTML='<div class=\\'preview-no-image\\'>Không có hình</div>'">` : '<div class="preview-no-image">Không có hình</div>'}
+                    </div>
+                    <div class="preview-right">
+                        <div class="preview-info-grid">
+                            <div class="preview-info-item">
+                                <span class="info-label">Case Number</span>
+                                <span class="info-value badge">${prompt.case_number || "-"}</span>
+                            </div>
+                            <div class="preview-info-item">
+                                <span class="info-label">Lượt xem</span>
+                                <span class="info-value">${prompt.view_count?.toLocaleString() || 0}</span>
+                            </div>
+                            <div class="preview-info-item">
+                                <span class="info-label">Trạng thái</span>
+                                <span class="info-value"><span class="status-badge ${statusClass}">${statusText}</span></span>
+                            </div>
+                            <div class="preview-info-item">
+                                <span class="info-label">Tác giả</span>
+                                <span class="info-value" style="color: var(--primary);">${prompt.author ? "@" + (prompt.author.username || prompt.author.name) : "-"}</span>
+                            </div>
+                            ${
+                                prompt.source_url
+                                    ? `
+                            <div class="preview-info-item full-width">
+                                <span class="info-label">Nguồn</span>
+                                <a href="${prompt.source_url}" target="_blank" class="info-value link">${prompt.source_url}</a>
+                            </div>`
+                                    : ""
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="preview-prompt-section">
+                    <h4 class="section-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <path d="M14 2v6h6"/>
+                            <path d="M16 13H8"/>
+                            <path d="M16 17H8"/>
+                            <path d="M10 9H8"/>
+                        </svg>
+                        Nội dung Prompt
+                    </h4>
+                    <div class="preview-prompt-text">${prompt.prompt_text || "Không có nội dung"}</div>
+                </div>
+            `;
+        } catch (error) {
+            content.innerHTML =
+                '<p style="color: var(--error);">Lỗi tải thông tin prompt</p>';
+        }
+    }
+
+    function closePreviewModal() {
+        document.getElementById("previewModal")?.classList.add("hidden");
+    }
+
+    // Duplicate Prompt
+    async function duplicatePrompt(id: number) {
+        if (!confirm("Bạn có muốn nhân bản prompt này?")) return;
+
+        try {
+            // Fetch original prompt
+            const response = await fetch(`${API_URL}/prompts/${id}`);
+            const prompt = await response.json();
+
+            // Create new prompt with same data
+            const newPrompt = {
+                title: `[Copy] ${prompt.title}`,
+                prompt_text: prompt.prompt_text,
+                source_url: prompt.source_url,
+                thumbnail: prompt.thumbnail,
+                author_id: prompt.author?.id || null,
+                is_hidden: true, // Start as hidden
+                tags: prompt.tags?.map((t: any) => t.slug) || [],
+            };
+
+            const createResponse = await fetch(`${API_URL}/prompts`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(newPrompt),
+            });
+
+            if (createResponse.ok) {
+                const result = await createResponse.json();
+                showAlert(
+                    `Đã nhân bản prompt thành công! ID mới: ${result.id}`,
+                    "success",
+                );
+                loadPrompts(currentPage, getFilters().search);
+            } else {
+                showAlert("Lỗi nhân bản prompt!", "error");
+            }
+        } catch (error) {
+            showAlert("Lỗi kết nối server!", "error");
+        }
+    }
+
+    // Delete modal functions
+    function openDeleteModal(id: number) {
+        deletePromptId = id;
+        document.getElementById("deleteModal")?.classList.remove("hidden");
+    }
+
+    function closeDeleteModal() {
+        deletePromptId = null;
+        document.getElementById("deleteModal")?.classList.add("hidden");
+    }
+
+    // Delete prompt
+    async function deletePrompt() {
+        if (!deletePromptId || !token) return;
+
+        try {
+            const response = await fetch(
+                `${API_URL}/prompts/${deletePromptId}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                },
+            );
+
+            if (response.ok) {
+                showAlert("Xóa prompt thành công!", "success");
+                closeDeleteModal();
+                loadPrompts(
+                    currentPage,
+                    (document.getElementById("searchInput") as HTMLInputElement)
+                        .value,
+                );
+            } else {
+                const data = await response.json();
+                showAlert(data.error || "Xóa thất bại!", "error");
+            }
+        } catch (error) {
+            showAlert("Lỗi kết nối server!", "error");
+        }
+    }
+
+    // ===== Bulk Operations =====
+    function getSelectedIds(): number[] {
+        const checkboxes = document.querySelectorAll(
+            ".row-checkbox:checked",
+        ) as NodeListOf<HTMLInputElement>;
+        return Array.from(checkboxes).map((cb) =>
+            parseInt(cb.dataset.id || "0"),
+        );
+    }
+
+    function updateBulkActionsBar() {
+        const selectedIds = getSelectedIds();
+        const bar = document.getElementById("bulkActionsBar");
+        const countEl = document.getElementById("selectedCount");
+        const selectAll = document.getElementById(
+            "selectAll",
+        ) as HTMLInputElement;
+
+        if (bar && countEl) {
+            countEl.textContent = selectedIds.length.toString();
+            if (selectedIds.length > 0) {
+                bar.classList.remove("hidden");
+            } else {
+                bar.classList.add("hidden");
+            }
+        }
+
+        const allCheckboxes = document.querySelectorAll(
+            ".row-checkbox",
+        ) as NodeListOf<HTMLInputElement>;
+        if (selectAll && allCheckboxes.length > 0) {
+            selectAll.checked = selectedIds.length === allCheckboxes.length;
+            selectAll.indeterminate =
+                selectedIds.length > 0 &&
+                selectedIds.length < allCheckboxes.length;
+        }
+    }
+
+    async function bulkDelete() {
+        const ids = getSelectedIds();
+        if (ids.length === 0) return;
+        if (!confirm(`Bạn có chắc muốn xóa ${ids.length} prompt đã chọn?`))
+            return;
+
+        try {
+            const response = await fetch(`${API_URL}/prompts/bulk-delete`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ ids }),
+            });
+            if (response.ok) {
+                const result = await response.json();
+                showAlert(`Đã xóa ${result.affected} prompts!`, "success");
+                loadPrompts(
+                    currentPage,
+                    (document.getElementById("searchInput") as HTMLInputElement)
+                        .value,
+                );
+            } else {
+                showAlert("Lỗi xóa prompts!", "error");
+            }
+        } catch (error) {
+            showAlert("Lỗi kết nối server!", "error");
+        }
+    }
+
+    async function bulkUpdateVisibility(isHidden: boolean) {
+        const ids = getSelectedIds();
+        if (ids.length === 0) return;
+
+        try {
+            const response = await fetch(`${API_URL}/prompts/bulk-visibility`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ ids, is_hidden: isHidden }),
+            });
+            if (response.ok) {
+                const result = await response.json();
+                showAlert(`Đã cập nhật ${result.affected} prompts!`, "success");
+                loadPrompts(
+                    currentPage,
+                    (document.getElementById("searchInput") as HTMLInputElement)
+                        .value,
+                );
+            } else {
+                showAlert("Lỗi cập nhật!", "error");
+            }
+        } catch (error) {
+            showAlert("Lỗi kết nối server!", "error");
+        }
+    }
+
+    // Event listeners
+    document.getElementById("searchInput")?.addEventListener("input", (e) => {
+        clearTimeout(searchTimeout);
+        const query = (e.target as HTMLInputElement).value;
+        searchTimeout = setTimeout(() => {
+            currentPage = 1;
+            loadPrompts(1, query);
+        }, 300) as unknown as number;
+    });
+
+    document
+        .getElementById("cancelDelete")
+        ?.addEventListener("click", closeDeleteModal);
+    document
+        .getElementById("confirmDelete")
+        ?.addEventListener("click", deletePrompt);
+    document.getElementById("deleteModal")?.addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) closeDeleteModal();
+    });
+
+    // Preview modal event listeners
+    document
+        .getElementById("closePreview")
+        ?.addEventListener("click", closePreviewModal);
+    document
+        .getElementById("closePreviewBtn")
+        ?.addEventListener("click", closePreviewModal);
+    document.getElementById("previewModal")?.addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) closePreviewModal();
+    });
+
+    // Bulk operations event listeners
+    document.getElementById("selectAll")?.addEventListener("change", (e) => {
+        const checked = (e.target as HTMLInputElement).checked;
+        document.querySelectorAll(".row-checkbox").forEach((cb) => {
+            (cb as HTMLInputElement).checked = checked;
+        });
+        updateBulkActionsBar();
+    });
+
+    document.getElementById("promptsTable")?.addEventListener("change", (e) => {
+        if ((e.target as HTMLElement).classList.contains("row-checkbox")) {
+            updateBulkActionsBar();
+        }
+    });
+
+    document
+        .getElementById("bulkDeleteBtn")
+        ?.addEventListener("click", bulkDelete);
+    document
+        .getElementById("bulkHideBtn")
+        ?.addEventListener("click", () => bulkUpdateVisibility(true));
+    document
+        .getElementById("bulkShowBtn")
+        ?.addEventListener("click", () => bulkUpdateVisibility(false));
+
+    // Filter event listeners
+    document
+        .getElementById("categoryFilter")
+        ?.addEventListener("change", () => {
+            currentPage = 1;
+            loadPrompts(1, getFilters().search);
+        });
+
+    document.getElementById("statusFilter")?.addEventListener("change", () => {
+        currentPage = 1;
+        loadPrompts(1, getFilters().search);
+    });
+
+    // Sortable header click listeners
+    document.querySelectorAll(".sortable").forEach((th) => {
+        th.addEventListener("click", () => {
+            const column = th.getAttribute("data-sort");
+            if (column) sortPrompts(column);
+        });
+    });
+
+    // Initial load
+    loadCategories();
+    loadPrompts();
+</script>

@@ -1,0 +1,157 @@
+---
+// Pagination - Neo-Brutalism Guideline
+interface Props {
+    currentPage: number;
+    totalPages: number;
+    baseUrl: string;
+}
+
+const { currentPage, totalPages, baseUrl } = Astro.props;
+
+const pages: (number | string)[] = [];
+const delta = 1;
+
+for (let i = 1; i <= totalPages; i++) {
+    if (
+        i === 1 ||
+        i === totalPages ||
+        (i >= currentPage - delta && i <= currentPage + delta)
+    ) {
+        pages.push(i);
+    } else if (pages[pages.length - 1] !== "...") {
+        pages.push("...");
+    }
+}
+
+function getPageUrl(page: number): string {
+    const url = new URL(baseUrl, "http://localhost");
+    url.searchParams.set("page", page.toString());
+    return url.pathname + url.search;
+}
+---
+
+{
+    totalPages > 1 && (
+        <nav class="pagination" aria-label="Pagination">
+            <a
+                href={currentPage > 1 ? getPageUrl(currentPage - 1) : undefined}
+                class:list={["page-btn", { disabled: currentPage <= 1 }]}
+            >
+                ← Trước
+            </a>
+
+            <div class="page-nums">
+                {pages.map((page) =>
+                    page === "..." ? (
+                        <span class="ellipsis">…</span>
+                    ) : (
+                        <a
+                            href={getPageUrl(page as number)}
+                            class:list={[
+                                "page-btn",
+                                "page-num",
+                                { active: page === currentPage },
+                            ]}
+                        >
+                            {page}
+                        </a>
+                    ),
+                )}
+            </div>
+
+            <a
+                href={
+                    currentPage < totalPages
+                        ? getPageUrl(currentPage + 1)
+                        : undefined
+                }
+                class:list={[
+                    "page-btn",
+                    { disabled: currentPage >= totalPages },
+                ]}
+            >
+                Sau →
+            </a>
+        </nav>
+    )
+}
+
+<style>
+    .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: var(--space-2xl);
+        flex-wrap: wrap;
+    }
+
+    .page-nums {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .page-btn {
+        padding: 10px 16px;
+        font-family: var(--font-display);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        background: white;
+        border: var(--border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        text-decoration: none;
+        transition: var(--transition-fast);
+    }
+
+    .page-btn:hover:not(.disabled):not(.active) {
+        transform: translate(-1px, -1px);
+        box-shadow: var(--shadow-md);
+        text-decoration: none;
+    }
+
+    .page-btn.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .page-btn.active {
+        background: var(--accent-primary);
+        color: white;
+        border-color: var(--accent-primary);
+    }
+
+    .page-num {
+        min-width: 42px;
+        text-align: center;
+        padding: 10px 8px;
+    }
+
+    .ellipsis {
+        padding: 0 6px;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    [data-theme="dark"] .page-btn {
+        background: var(--bg-secondary);
+    }
+
+    @media (max-width: 640px) {
+        .page-btn:not(.page-num) {
+            padding: 8px 12px;
+            font-size: 0.75rem;
+        }
+
+        .page-num:not(.active) {
+            display: none;
+        }
+
+        .ellipsis {
+            display: none;
+        }
+    }
+</style>

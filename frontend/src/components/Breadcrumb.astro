@@ -1,0 +1,101 @@
+---
+// Breadcrumb Component with Schema.org markup
+interface BreadcrumbItem {
+    name: string;
+    href?: string;
+}
+
+interface Props {
+    items: BreadcrumbItem[];
+}
+
+const { items } = Astro.props;
+---
+
+<nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+        <li
+            itemprop="itemListElement"
+            itemscope
+            itemtype="https://schema.org/ListItem"
+        >
+            <a itemprop="item" href="/">
+                <span itemprop="name">Trang chủ</span>
+            </a>
+            <meta itemprop="position" content="1" />
+            <span class="separator">›</span>
+        </li>
+
+        {
+            items.map((item, index) => (
+                <li
+                    itemprop="itemListElement"
+                    itemscope
+                    itemtype="https://schema.org/ListItem"
+                >
+                    {item.href ? (
+                        <>
+                            <a itemprop="item" href={item.href}>
+                                <span itemprop="name">{item.name}</span>
+                            </a>
+                            <span class="separator">›</span>
+                        </>
+                    ) : (
+                        <span itemprop="name" class="current">
+                            {item.name}
+                        </span>
+                    )}
+                    <meta itemprop="position" content={String(index + 2)} />
+                </li>
+            ))
+        }
+    </ol>
+</nav>
+
+<style>
+    .breadcrumb {
+        margin-bottom: var(--space-lg);
+    }
+
+    .breadcrumb ol {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 0.875rem;
+    }
+
+    .breadcrumb li {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .breadcrumb a {
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .breadcrumb a:hover {
+        color: var(--accent-primary);
+    }
+
+    .separator {
+        color: var(--text-muted);
+        opacity: 0.5;
+    }
+
+    .current {
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    /* Don't show separator after last item */
+    .breadcrumb li:last-child .separator {
+        display: none;
+    }
+</style>
