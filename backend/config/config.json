@@ -1,0 +1,13 @@
+{
+    "database": {
+        "dsn": "root:@tcp(127.0.0.1:3306)/mimirprompt_db?charset=utf8mb4&parseTime=True&loc=Local"
+    },
+    "server": {
+        "port": "2992"
+    },
+    "data": {
+        "prompts_json": "../data/prompts.json",
+        "images_dir": "../data/images",
+        "images_url_prefix": "/images"
+    }
+}

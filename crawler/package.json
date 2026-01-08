@@ -1,0 +1,16 @@
+{
+  "name": "prompt-crawler",
+  "version": "1.0.0",
+  "description": "Crawl AI prompts from opennana.com",
+  "main": "crawler.js",
+  "scripts": {
+    "crawl": "node crawler.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@vitalets/google-translate-api": "^9.2.1",
+    "bcrypt": "^6.0.0",
+    "mysql2": "^3.15.3",
+    "playwright": "^1.40.0"
+  }
+}
