@@ -1,0 +1,8 @@
+# Environment variables
+.env
+
+# PocketBase data (optional - uncomment if you don't want to commit data)
+# pb_data/
+
+# Node modules
+node_modules/

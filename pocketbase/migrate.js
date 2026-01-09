@@ -1,18 +1,20 @@
+require('dotenv').config();
 const PocketBase = require('pocketbase/cjs');
 const mysql = require('mysql2/promise');
 
-// Configuration
-const PB_URL = 'http://127.0.0.1:8090';
-const ADMIN_EMAIL = 'admin@mimirprompt.com';
-const ADMIN_PASS = 'mimirprompt123';
+// Configuration from environment variables
+const PB_URL = process.env.PB_URL || 'http://127.0.0.1:8090';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASS = process.env.ADMIN_PASS;
 
 const MYSQL_CONFIG = {
-    host: '127.0.0.1',
-    port: 3306,
-    user: 'root',
-    password: '',
-    database: 'mimirprompt_db'
+    host: process.env.MYSQL_HOST || '127.0.0.1',
+    port: parseInt(process.env.MYSQL_PORT) || 3306,
+    user: process.env.MYSQL_USER || 'root',
+    password: process.env.MYSQL_PASS || '',
+    database: process.env.MYSQL_DB || 'mimirprompt_db'
 };
+
 
 async function main() {
     console.log('🚀 Starting re-migration from MySQL...');
