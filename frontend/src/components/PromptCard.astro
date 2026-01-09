@@ -1,7 +1,9 @@
 ---
 // PromptCard - Neo-Brutalism Guideline
+import BookmarkButton from "./BookmarkButton.astro";
+
 interface Props {
-    id: number;
+    id: string;
     title: string;
     thumbnail: string;
     tags?: { name: string; slug: string }[];
@@ -28,6 +30,9 @@ const tagColors = [
         <img src={imageUrl} alt={title} loading="lazy" decoding="async" />
         <div class="card-overlay">
             <span class="overlay-text">Xem chi tiết →</span>
+        </div>
+        <div class="bookmark-wrapper">
+            <BookmarkButton promptId={id} promptTitle={title} size="sm" />
         </div>
     </div>
     <div class="card-body">
@@ -78,6 +83,19 @@ const tagColors = [
         aspect-ratio: 4/3;
         overflow: hidden;
         border-bottom: var(--border);
+    }
+
+    .bookmark-wrapper {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .prompt-card:hover .bookmark-wrapper {
+        opacity: 1;
     }
 
     .card-image img {

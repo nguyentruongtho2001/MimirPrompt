@@ -2,6 +2,7 @@
 // Homepage - Neo-Brutalism Guideline
 import PublicLayout from "../layouts/PublicLayout.astro";
 import PromptCard from "../components/PromptCard.astro";
+import RecentSlider from "../components/RecentSlider.astro";
 import Pagination from "../components/Pagination.astro";
 import { pb } from "../lib/pb";
 
@@ -10,10 +11,11 @@ const page = parseInt(url.searchParams.get("page") || "1");
 const search = url.searchParams.get("q") || "";
 const perPage = 20;
 
-let prompts = [];
+let prompts: any[] = [];
 let total = 0;
 let totalPages = 0;
-let popularTags = [];
+let popularTags: any[] = [];
+let recentPrompts: any[] = [];
 let error = null;
 
 try {
@@ -38,6 +40,12 @@ try {
 		sort: "-prompt_count",
 	});
 	popularTags = tagsResult.items;
+
+	// 3. Get Recent Prompts for Slider (using case_number since created field may not be sortable)
+	const recentResult = await pb.collection("prompts").getList(1, 10, {
+		sort: "-case_number",
+	});
+	recentPrompts = recentResult.items;
 } catch (e: any) {
 	console.error(e);
 	error = "Không thể kết nối đến server.";
@@ -80,8 +88,17 @@ const baseUrl = search ? `/?q=${encodeURIComponent(search)}` : "/";
 					</button>
 				</div>
 			</form>
+
+			<!-- Random Prompt Button -->
+			<button class="random-btn" id="randomPromptBtn">
+				<span class="dice-icon">🎲</span>
+				Khám phá ngẫu nhiên
+			</button>
 		</div>
 	</section>
+
+	<!-- Recent Prompts Slider -->
+	{recentPrompts.length > 0 && <RecentSlider prompts={recentPrompts} />}
 
 	<!-- Main Layout -->
 	<div class="container main-layout">
@@ -242,6 +259,58 @@ const baseUrl = search ? `/?q=${encodeURIComponent(search)}` : "/";
 
 	.search-btn:hover {
 		background: var(--accent-primary-hover);
+	}
+
+	/* Random Button */
+	.random-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		margin-top: var(--space-lg);
+		padding: 12px 24px;
+		background: var(--accent-secondary);
+		color: var(--text-primary);
+		font-family: var(--font-display);
+		font-size: 0.875rem;
+		font-weight: 600;
+		border: var(--border);
+		border-radius: var(--radius-md);
+		box-shadow: var(--shadow-md);
+		cursor: pointer;
+		transition: var(--transition-fast);
+	}
+
+	.random-btn:hover {
+		transform: translate(-2px, -2px);
+		box-shadow: var(--shadow-lg);
+	}
+
+	.random-btn:active {
+		transform: translate(2px, 2px);
+		box-shadow: none;
+	}
+
+	.dice-icon {
+		font-size: 1.125rem;
+		animation: shake 0.5s ease-in-out infinite paused;
+	}
+
+	.random-btn:hover .dice-icon {
+		animation-play-state: running;
+	}
+
+	@keyframes shake {
+		0%,
+		100% {
+			transform: rotate(0deg);
+		}
+		25% {
+			transform: rotate(-15deg);
+		}
+		75% {
+			transform: rotate(15deg);
+		}
 	}
 
 	/* Main Layout */
@@ -405,3 +474,17 @@ const baseUrl = search ? `/?q=${encodeURIComponent(search)}` : "/";
 		}
 	}
 </style>
+
+<script define:vars={{ prompts }}>
+	// Random Prompt Button
+	document
+		.getElementById("randomPromptBtn")
+		?.addEventListener("click", () => {
+			const promptIds = prompts.map((p) => p.id);
+			if (promptIds.length > 0) {
+				const randomId =
+					promptIds[Math.floor(Math.random() * promptIds.length)];
+				window.location.href = `/prompt/${randomId}`;
+			}
+		});
+</script>

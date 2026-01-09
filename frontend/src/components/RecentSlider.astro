@@ -1,0 +1,463 @@
+---
+// TopPromptsCarousel - Infinite loop spotlight carousel
+interface Props {
+    prompts: {
+        id: string;
+        title: string;
+        thumbnail: string;
+        view_count?: number;
+    }[];
+}
+
+const { prompts } = Astro.props;
+
+// Get top 5 prompts for the carousel
+const topPrompts = prompts.slice(0, 5);
+---
+
+<section class="top-section">
+    <div class="container">
+        <h2 class="section-title">
+            <span class="fire-icon">🔥</span>
+            Prompt mới nhất
+        </h2>
+
+        <div class="carousel-wrapper">
+            <button class="carousel-nav prev" aria-label="Previous">
+                <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                >
+                    <path d="M15 18l-6-6 6-6"></path>
+                </svg>
+            </button>
+
+            <div class="carousel-viewport">
+                <div class="carousel-track">
+                    {/* Render 3 sets for infinite loop effect */}
+                    {
+                        [...topPrompts, ...topPrompts, ...topPrompts].map(
+                            (prompt, index) => {
+                                const realIndex = index % topPrompts.length;
+                                return (
+                                    <a
+                                        href={`/prompt/${prompt.id}`}
+                                        class="carousel-card"
+                                        data-index={index}
+                                    >
+                                        {/* Crown for center item */}
+                                        <div class="crown-badge">
+                                            <svg
+                                                width="28"
+                                                height="28"
+                                                viewBox="0 0 24 24"
+                                                fill="#FFD700"
+                                            >
+                                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                                            </svg>
+                                        </div>
+
+                                        {/* Rank number */}
+                                        <div class="rank-badge">
+                                            {realIndex + 1}
+                                        </div>
+
+                                        {/* Hot badge */}
+                                        <div class="hot-badge">🔥 Hot</div>
+
+                                        <div class="card-image">
+                                            <img
+                                                src={prompt.thumbnail}
+                                                alt={prompt.title}
+                                                loading="lazy"
+                                            />
+                                        </div>
+
+                                        <div class="card-info">
+                                            <h3 class="card-title">
+                                                {prompt.title}
+                                            </h3>
+                                            <span class="view-count">
+                                                <svg
+                                                    width="14"
+                                                    height="14"
+                                                    viewBox="0 0 24 24"
+                                                    fill="currentColor"
+                                                >
+                                                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                                                </svg>
+                                                {prompt.view_count?.toLocaleString() ||
+                                                    "0"}
+                                            </span>
+                                        </div>
+                                    </a>
+                                );
+                            },
+                        )
+                    }
+                </div>
+            </div>
+
+            <button class="carousel-nav next" aria-label="Next">
+                <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                >
+                    <path d="M9 18l6-6-6-6"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+</section>
+
+<style>
+    .top-section {
+        padding: var(--space-2xl) 0;
+        background: linear-gradient(
+            180deg,
+            var(--bg-primary) 0%,
+            var(--bg-secondary) 100%
+        );
+        overflow: hidden;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-sm);
+        font-size: 1.75rem;
+        margin-bottom: var(--space-xl);
+        text-align: center;
+    }
+
+    .fire-icon {
+        font-size: 1.5rem;
+    }
+
+    .carousel-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-xl);
+        position: relative;
+    }
+
+    .carousel-nav {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: var(--border);
+        border-radius: 50%;
+        box-shadow: var(--shadow-md);
+        cursor: pointer;
+        transition: var(--transition-fast);
+        color: var(--text-primary);
+        flex-shrink: 0;
+        z-index: 10;
+    }
+
+    .carousel-nav:hover {
+        transform: scale(1.1);
+        background: var(--accent-primary);
+        color: white;
+    }
+
+    .carousel-viewport {
+        width: 700px;
+        height: 380px; /* Fixed height to prevent layout shift */
+        overflow: hidden;
+        position: relative;
+    }
+
+    .carousel-track {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        transition: transform 0.4s ease;
+        padding: 60px 0;
+        will-change: transform;
+    }
+
+    .carousel-card {
+        position: relative;
+        flex: 0 0 180px;
+        height: 260px;
+        background: linear-gradient(145deg, #f0f4ff 0%, #f8f8fc 100%);
+        border: var(--border);
+        border-radius: 20px;
+        overflow: visible;
+        text-decoration: none;
+        color: var(--text-primary);
+        transition:
+            transform 0.4s ease,
+            opacity 0.4s ease,
+            box-shadow 0.4s ease,
+            border-color 0.4s ease;
+        transform: scale(0.85);
+        opacity: 0.5;
+        box-shadow: var(--shadow-sm);
+        will-change: transform, opacity;
+    }
+
+    .carousel-card.active {
+        transform: scale(1.15);
+        opacity: 1;
+        z-index: 5;
+        border-color: var(--accent-primary);
+        border-width: 3px;
+        box-shadow: 0 20px 50px rgba(79, 70, 229, 0.3);
+    }
+
+    .carousel-card:hover {
+        text-decoration: none;
+    }
+
+    /* Crown - only visible on active */
+    .crown-badge {
+        position: absolute;
+        top: -24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .carousel-card.active .crown-badge {
+        opacity: 1;
+    }
+
+    .rank-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        width: 26px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--accent-primary);
+        color: white;
+        font-family: var(--font-display);
+        font-size: 0.8125rem;
+        font-weight: 700;
+        border-radius: 50%;
+        border: 2px solid white;
+        z-index: 5;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Hot badge - only visible on active */
+    .hot-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 4px 10px;
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+        color: white;
+        font-family: var(--font-display);
+        font-size: 0.625rem;
+        font-weight: 600;
+        border-radius: 20px;
+        z-index: 5;
+        box-shadow: 0 2px 8px rgba(238, 90, 90, 0.4);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .carousel-card.active .hot-badge {
+        opacity: 1;
+    }
+
+    .card-image {
+        width: 100%;
+        height: 65%;
+        overflow: hidden;
+        border-radius: 17px 17px 0 0;
+    }
+
+    .card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .card-info {
+        padding: var(--space-sm) var(--space-md);
+        text-align: center;
+        background: white;
+        height: 35%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        border-radius: 0 0 17px 17px;
+    }
+
+    .card-title {
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1.3;
+        margin: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .carousel-card.active .card-title {
+        font-size: 0.875rem;
+    }
+
+    .view-count {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        font-size: 0.6875rem;
+        color: var(--accent-primary);
+        font-weight: 500;
+    }
+
+    @media (max-width: 900px) {
+        .carousel-viewport {
+            width: 500px;
+            height: 340px;
+        }
+
+        .carousel-card {
+            flex: 0 0 140px;
+            height: 210px;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .carousel-viewport {
+            width: 320px;
+            height: 280px;
+        }
+
+        .carousel-card {
+            flex: 0 0 100px;
+            height: 160px;
+            border-radius: 12px;
+        }
+
+        .carousel-nav {
+            width: 36px;
+            height: 36px;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+        }
+
+        .card-image {
+            border-radius: 9px 9px 0 0;
+        }
+
+        .card-info {
+            border-radius: 0 0 9px 9px;
+            padding: var(--space-xs) var(--space-sm);
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const track = document.querySelector(".carousel-track") as HTMLElement;
+        const cards = document.querySelectorAll(".carousel-card");
+        const prevBtn = document.querySelector(".carousel-nav.prev");
+        const nextBtn = document.querySelector(".carousel-nav.next");
+
+        if (!track || !prevBtn || !nextBtn || cards.length === 0) return;
+
+        const totalItems = 5; // Original number of prompts
+        const totalCards = cards.length; // 15 cards (3 sets of 5)
+        let currentIndex = totalItems; // Start at middle set
+        const cardWidth = 200; // Approximate width including gap
+
+        function updateCarousel(animate = true) {
+            // Update active class
+            cards.forEach((card, index) => {
+                card.classList.toggle("active", index === currentIndex);
+            });
+
+            // Calculate offset to center the active card
+            const viewportCenter = 350; // Half of viewport width
+            const offset =
+                currentIndex * cardWidth - viewportCenter + cardWidth / 2;
+
+            if (!animate) {
+                track.style.transition = "none";
+            } else {
+                track.style.transition =
+                    "transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)";
+            }
+
+            track.style.transform = `translateX(-${offset}px)`;
+        }
+
+        function handleInfiniteLoop() {
+            // If we've scrolled to the last set, jump to middle set
+            if (currentIndex >= totalItems * 2) {
+                setTimeout(() => {
+                    currentIndex = currentIndex - totalItems;
+                    updateCarousel(false);
+                }, 500);
+            }
+            // If we've scrolled to the first set, jump to middle set
+            else if (currentIndex < totalItems) {
+                setTimeout(() => {
+                    currentIndex = currentIndex + totalItems;
+                    updateCarousel(false);
+                }, 500);
+            }
+        }
+
+        prevBtn.addEventListener("click", () => {
+            currentIndex--;
+            updateCarousel();
+            handleInfiniteLoop();
+        });
+
+        nextBtn.addEventListener("click", () => {
+            currentIndex++;
+            updateCarousel();
+            handleInfiniteLoop();
+        });
+
+        // Initial position
+        updateCarousel(false);
+
+        // Auto-rotate every 4 seconds
+        let autoRotate = setInterval(() => {
+            currentIndex++;
+            updateCarousel();
+            handleInfiniteLoop();
+        }, 4000);
+
+        // Pause on hover
+        track.addEventListener("mouseenter", () => clearInterval(autoRotate));
+        track.addEventListener("mouseleave", () => {
+            autoRotate = setInterval(() => {
+                currentIndex++;
+                updateCarousel();
+                handleInfiniteLoop();
+            }, 4000);
+        });
+    });
+</script>

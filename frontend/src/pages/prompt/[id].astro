@@ -15,11 +15,8 @@ try {
       expand: 'tags,category,author'
     });
     
-    // Increment view count (fire and forget)
-    // Note: In a real app, do this client side or distinct logic to avoid abuse
-    pb.collection('prompts').update(id, { 
-      view_count: (prompt.view_count || 0) + 1 
-    }).catch(console.error);
+    // Note: view_count update removed - requires admin/superuser permission
+    // To enable, update PocketBase API rules for prompts collection
   } else {
       error = "ID không hợp lệ";
   }

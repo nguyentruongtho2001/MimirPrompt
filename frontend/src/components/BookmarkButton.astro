@@ -1,0 +1,174 @@
+---
+// BookmarkButton - Client-side bookmark with localStorage
+interface Props {
+    promptId: string;
+    promptTitle: string;
+    size?: "sm" | "md";
+}
+
+const { promptId, promptTitle, size = "md" } = Astro.props;
+---
+
+<button
+    class={`bookmark-btn ${size}`}
+    data-prompt-id={promptId}
+    data-prompt-title={promptTitle}
+    aria-label="Thêm vào yêu thích"
+>
+    <svg
+        class="icon-outline"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+    >
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+    </svg>
+    <svg
+        class="icon-filled"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+    >
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+    </svg>
+</button>
+
+<style>
+    .bookmark-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: var(--border);
+        border-radius: 50%;
+        cursor: pointer;
+        transition: var(--transition-fast);
+        color: var(--text-muted);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .bookmark-btn.md {
+        width: 40px;
+        height: 40px;
+    }
+
+    .bookmark-btn.sm {
+        width: 32px;
+        height: 32px;
+    }
+
+    .bookmark-btn.sm svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .bookmark-btn:hover {
+        transform: scale(1.1);
+        color: var(--accent-primary);
+        border-color: var(--accent-primary);
+    }
+
+    .bookmark-btn .icon-filled {
+        display: none;
+    }
+
+    .bookmark-btn.bookmarked {
+        background: var(--accent-primary);
+        border-color: var(--accent-primary);
+        color: white;
+    }
+
+    .bookmark-btn.bookmarked .icon-outline {
+        display: none;
+    }
+
+    .bookmark-btn.bookmarked .icon-filled {
+        display: block;
+    }
+
+    .bookmark-btn.bookmarked:hover {
+        background: var(--accent-primary-hover);
+    }
+
+    /* Animation on bookmark */
+    @keyframes bookmarkPop {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.3);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .bookmark-btn.just-bookmarked {
+        animation: bookmarkPop 0.3s ease;
+    }
+</style>
+
+<script>
+    // Bookmark functionality with localStorage
+    const STORAGE_KEY = "mimir_bookmarks";
+
+    function getBookmarks(): string[] {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        } catch {
+            return [];
+        }
+    }
+
+    function saveBookmarks(bookmarks: string[]) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarks));
+    }
+
+    function isBookmarked(promptId: string): boolean {
+        return getBookmarks().includes(promptId);
+    }
+
+    function toggleBookmark(promptId: string): boolean {
+        const bookmarks = getBookmarks();
+        const index = bookmarks.indexOf(promptId);
+
+        if (index > -1) {
+            bookmarks.splice(index, 1);
+            saveBookmarks(bookmarks);
+            return false;
+        } else {
+            bookmarks.push(promptId);
+            saveBookmarks(bookmarks);
+            return true;
+        }
+    }
+
+    // Initialize all bookmark buttons
+    document.querySelectorAll(".bookmark-btn").forEach((btn) => {
+        const promptId = btn.getAttribute("data-prompt-id");
+        if (!promptId) return;
+
+        // Set initial state
+        if (isBookmarked(promptId)) {
+            btn.classList.add("bookmarked");
+        }
+
+        // Handle click
+        btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const nowBookmarked = toggleBookmark(promptId);
+            btn.classList.toggle("bookmarked", nowBookmarked);
+
+            if (nowBookmarked) {
+                btn.classList.add("just-bookmarked");
+                setTimeout(() => btn.classList.remove("just-bookmarked"), 300);
+            }
+        });
+    });
+</script>
