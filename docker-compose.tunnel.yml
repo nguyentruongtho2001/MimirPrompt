@@ -1,0 +1,54 @@
+# MimirPrompt - Self-Hosted với Cloudflare Tunnel
+
+version: "3.8"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mimir-frontend
+    restart: unless-stopped
+    expose:
+      - "4321"
+    environment:
+      - PUBLIC_POCKETBASE_URL=https://api.mimirprompt.com
+      - PUBLIC_SITE_URL=https://mimirprompt.com
+    depends_on:
+      - pocketbase
+    networks:
+      - mimir-network
+
+  pocketbase:
+    build:
+      context: ./pocketbase
+      dockerfile: Dockerfile
+    container_name: mimir-pocketbase
+    restart: unless-stopped
+    expose:
+      - "8090"
+    volumes:
+      - pocketbase_data:/pb/pb_data
+    networks:
+      - mimir-network
+
+  # Cloudflare Tunnel - thay thế Nginx + SSL
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: mimir-tunnel
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - frontend
+      - pocketbase
+    networks:
+      - mimir-network
+
+networks:
+  mimir-network:
+    driver: bridge
+
+volumes:
+  pocketbase_data:
