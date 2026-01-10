@@ -475,16 +475,64 @@ const baseUrl = search ? `/?q=${encodeURIComponent(search)}` : "/";
 	}
 </style>
 
-<script define:vars={{ prompts }}>
-	// Random Prompt Button
+<script define:vars={{ total }}>
+	// Random Prompt Button - Fetch from entire database
 	document
 		.getElementById("randomPromptBtn")
-		?.addEventListener("click", () => {
-			const promptIds = prompts.map((p) => p.id);
-			if (promptIds.length > 0) {
-				const randomId =
-					promptIds[Math.floor(Math.random() * promptIds.length)];
-				window.location.href = `/prompt/${randomId}`;
+		?.addEventListener("click", async () => {
+			const btn = document.getElementById("randomPromptBtn");
+			if (!btn) return;
+
+			// Show loading state
+			btn.disabled = true;
+			btn.innerHTML = '<span class="dice-icon">🎲</span> Đang tìm...';
+
+			try {
+				// Get a random offset based on total items
+				const totalItems = total || 100;
+				const randomSkip = Math.floor(Math.random() * totalItems);
+
+				// Fetch one random prompt using PocketBase API
+				const response = await fetch(
+					`${window.API_URL || "http://127.0.0.1:8090"}/api/collections/prompts/records?perPage=1&page=${randomSkip + 1}&sort=-case_number`,
+				);
+
+				if (response.ok) {
+					const data = await response.json();
+					if (data.items && data.items.length > 0) {
+						window.location.href = `/prompt/${data.items[0].id}`;
+						return;
+					}
+				}
+
+				// Fallback: try first page
+				const fallbackResponse = await fetch(
+					`${window.API_URL || "http://127.0.0.1:8090"}/api/collections/prompts/records?perPage=100&page=1`,
+				);
+
+				if (fallbackResponse.ok) {
+					const fallbackData = await fallbackResponse.json();
+					if (fallbackData.items && fallbackData.items.length > 0) {
+						const randomItem =
+							fallbackData.items[
+								Math.floor(
+									Math.random() * fallbackData.items.length,
+								)
+							];
+						window.location.href = `/prompt/${randomItem.id}`;
+						return;
+					}
+				}
+
+				alert("Không tìm thấy prompt nào!");
+			} catch (error) {
+				console.error("Error fetching random prompt:", error);
+				alert("Có lỗi xảy ra. Vui lòng thử lại!");
+			} finally {
+				// Restore button state
+				btn.disabled = false;
+				btn.innerHTML =
+					'<span class="dice-icon">🎲</span> Khám phá ngẫu nhiên';
 			}
 		});
 </script>

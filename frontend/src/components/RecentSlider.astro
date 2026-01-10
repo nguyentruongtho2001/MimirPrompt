@@ -347,12 +347,12 @@ const topPrompts = prompts.slice(0, 5);
     @media (max-width: 640px) {
         .carousel-viewport {
             width: 320px;
-            height: 280px;
+            height: 300px;
         }
 
         .carousel-card {
-            flex: 0 0 100px;
-            height: 160px;
+            flex: 0 0 120px;
+            height: 180px;
             border-radius: 12px;
         }
 
@@ -373,6 +373,84 @@ const topPrompts = prompts.slice(0, 5);
             border-radius: 0 0 9px 9px;
             padding: var(--space-xs) var(--space-sm);
         }
+
+        .card-title {
+            font-size: 0.65rem;
+        }
+
+        .carousel-card.active .card-title {
+            font-size: 0.75rem;
+        }
+    }
+
+    /* Extra small screens - show centered card with visible side cards */
+    @media (max-width: 480px) {
+        .carousel-wrapper {
+            gap: var(--space-xs);
+            overflow: visible;
+        }
+
+        .carousel-viewport {
+            width: 100%;
+            max-width: 300px;
+            height: 340px;
+            overflow: visible;
+        }
+
+        .carousel-track {
+            padding: 40px 0;
+        }
+
+        .carousel-card {
+            flex: 0 0 140px;
+            height: 200px;
+            transform: scale(0.8);
+            opacity: 0.6;
+        }
+
+        .carousel-card.active {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .carousel-nav {
+            width: 32px;
+            height: 32px;
+        }
+
+        .carousel-nav svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .rank-badge {
+            width: 22px;
+            height: 22px;
+            font-size: 0.7rem;
+        }
+
+        .card-title {
+            font-size: 0.65rem;
+            -webkit-line-clamp: 2;
+        }
+
+        .carousel-card.active .card-title {
+            font-size: 0.75rem;
+        }
+
+        .view-count {
+            font-size: 0.6rem;
+        }
+
+        .hot-badge {
+            font-size: 0.55rem;
+            padding: 3px 8px;
+        }
+
+        .crown-badge svg {
+            width: 22px;
+            height: 22px;
+        }
     }
 </style>
 
@@ -388,7 +466,23 @@ const topPrompts = prompts.slice(0, 5);
         const totalItems = 5; // Original number of prompts
         const totalCards = cards.length; // 15 cards (3 sets of 5)
         let currentIndex = totalItems; // Start at middle set
-        const cardWidth = 200; // Approximate width including gap
+
+        // Responsive card width calculation
+        function getCardWidth() {
+            const width = window.innerWidth;
+            if (width <= 480) return 155; // Extra small (140px + gap)
+            if (width <= 640) return 140; // Small
+            if (width <= 900) return 160; // Medium
+            return 200; // Large
+        }
+
+        function getViewportCenter() {
+            const width = window.innerWidth;
+            if (width <= 480) return 150; // Extra small (centered in 300px viewport)
+            if (width <= 640) return 160; // Small
+            if (width <= 900) return 250; // Medium
+            return 350; // Large
+        }
 
         function updateCarousel(animate = true) {
             // Update active class
@@ -397,7 +491,8 @@ const topPrompts = prompts.slice(0, 5);
             });
 
             // Calculate offset to center the active card
-            const viewportCenter = 350; // Half of viewport width
+            const cardWidth = getCardWidth();
+            const viewportCenter = getViewportCenter();
             const offset =
                 currentIndex * cardWidth - viewportCenter + cardWidth / 2;
 

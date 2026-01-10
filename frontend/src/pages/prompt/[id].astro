@@ -14,9 +14,7 @@ try {
     prompt = await pb.collection('prompts').getOne(id, {
       expand: 'tags,category,author'
     });
-    
-    // Note: view_count update removed - requires admin/superuser permission
-    // To enable, update PocketBase API rules for prompts collection
+    // View count is incremented via client-side call to /api/prompts/:id/view
   } else {
       error = "ID không hợp lệ";
   }
@@ -423,3 +421,45 @@ const breadcrumbItems = prompt ? [
     });
   });
 </script>
+
+<script define:vars={{ id }}>
+  // Increment view count via custom API endpoint
+  // Uses sessionStorage to prevent duplicate counts in same session
+  (async () => {
+    const promptId = id;
+    if (!promptId) return;
+    
+    const viewedKey = `viewed_${promptId}`;
+    
+    // Check if already viewed in this session
+    if (sessionStorage.getItem(viewedKey)) {
+      return;
+    }
+    
+    try {
+      const apiUrl = window.API_URL || 'http://127.0.0.1:8090';
+      const response = await fetch(`${apiUrl}/api/prompts/${promptId}/view`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        // Mark as viewed in this session
+        sessionStorage.setItem(viewedKey, 'true');
+        
+        // Update displayed view count
+        const data = await response.json();
+        const viewCountEl = document.querySelector('.meta-value');
+        if (viewCountEl && data.view_count) {
+          viewCountEl.textContent = data.view_count.toString();
+        }
+      }
+    } catch (err) {
+      // Silent fail - view count is not critical
+      console.log('View count update failed:', err);
+    }
+  })();
+</script>
+

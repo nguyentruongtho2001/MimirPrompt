@@ -18,8 +18,9 @@ const {
     canonical,
 } = Astro.props;
 
-const SITE_URL = "http://localhost:4321";
-const API_URL = "http://localhost:2992";
+const SITE_URL = import.meta.env.PUBLIC_SITE_URL || "http://localhost:4321";
+const API_URL =
+    import.meta.env.PUBLIC_POCKETBASE_URL || "http://127.0.0.1:8090";
 const fullTitle = `${title} | MimirPrompt`;
 const imageUrl = image.startsWith("http") ? image : `${SITE_URL}${image}`;
 const canonicalUrl = canonical || Astro.url.href;
@@ -70,8 +71,53 @@ const canonicalUrl = canonical || Astro.url.href;
                 <nav class="nav">
                     <a href="/tags" class="nav-link">Tags</a>
                 </nav>
+
+                <!-- Mobile Menu Button -->
+                <button
+                    class="mobile-menu-btn"
+                    id="mobileMenuBtn"
+                    aria-label="Menu"
+                >
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                </button>
             </div>
         </header>
+
+        <!-- Mobile Menu Overlay -->
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
+        <!-- Mobile Menu Panel -->
+        <nav class="mobile-menu" id="mobileMenu">
+            <div class="mobile-menu-header">
+                <span class="mobile-menu-title">MimirPrompt</span>
+                <button
+                    class="mobile-menu-close"
+                    id="mobileMenuClose"
+                    aria-label="Close menu"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="mobile-menu-links">
+                <a href="/" class="mobile-link">🏠 Trang chủ</a>
+                <a href="/tags" class="mobile-link">🏷️ Tags</a>
+            </div>
+        </nav>
 
         <!-- Main -->
         <main class="main">
@@ -179,10 +225,152 @@ const canonicalUrl = canonical || Astro.url.href;
                 font-size: 0.875rem;
             }
 
+            /* Mobile Menu Button */
+            .mobile-menu-btn {
+                display: none;
+                flex-direction: column;
+                justify-content: center;
+                gap: 5px;
+                width: 40px;
+                height: 40px;
+                padding: 8px;
+                background: none;
+                border: 2px solid #1a1a1a;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: 0.15s ease;
+            }
+
+            .mobile-menu-btn:hover {
+                background: #f5f5f0;
+            }
+
+            .hamburger-line {
+                display: block;
+                width: 100%;
+                height: 2px;
+                background: #1a1a1a;
+                border-radius: 1px;
+                transition: 0.2s ease;
+            }
+
+            .mobile-menu-btn.active .hamburger-line:nth-child(1) {
+                transform: rotate(45deg) translate(5px, 5px);
+            }
+
+            .mobile-menu-btn.active .hamburger-line:nth-child(2) {
+                opacity: 0;
+            }
+
+            .mobile-menu-btn.active .hamburger-line:nth-child(3) {
+                transform: rotate(-45deg) translate(5px, -5px);
+            }
+
+            /* Mobile Menu Overlay */
+            .mobile-menu-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 998;
+                opacity: 0;
+                visibility: hidden;
+                transition: 0.3s ease;
+            }
+
+            .mobile-menu-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            /* Mobile Menu Panel */
+            .mobile-menu {
+                position: fixed;
+                top: 0;
+                right: -280px;
+                width: 280px;
+                height: 100vh;
+                background: white;
+                border-left: 2px solid #1a1a1a;
+                box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+                z-index: 999;
+                transition: 0.3s ease;
+                overflow-y: auto;
+            }
+
+            .mobile-menu.active {
+                right: 0;
+            }
+
+            .mobile-menu-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 16px 20px;
+                border-bottom: 2px solid #1a1a1a;
+                background: var(--accent-secondary, #fef08a);
+            }
+
+            .mobile-menu-title {
+                font-family: var(--font-display);
+                font-size: 1.125rem;
+                font-weight: 700;
+            }
+
+            .mobile-menu-close {
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: white;
+                border: 2px solid #1a1a1a;
+                border-radius: 4px;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: 0.15s ease;
+            }
+
+            .mobile-menu-close:hover {
+                background: #1a1a1a;
+                color: white;
+            }
+
+            .mobile-menu-links {
+                padding: 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .mobile-link {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 14px 16px;
+                background: #f5f5f0;
+                border: 2px solid #1a1a1a;
+                border-radius: 4px;
+                font-size: 1rem;
+                font-weight: 500;
+                color: #1a1a1a;
+                text-decoration: none;
+                transition: 0.15s ease;
+            }
+
+            .mobile-link:hover {
+                background: var(--accent-primary, #4f46e5);
+                color: white;
+                text-decoration: none;
+            }
+
             /* Responsive */
             @media (max-width: 768px) {
                 .nav {
                     display: none;
+                }
+
+                .mobile-menu-btn {
+                    display: flex;
                 }
 
                 .header-inner {
@@ -197,6 +385,38 @@ const canonicalUrl = canonical || Astro.url.href;
 
         <script define:vars={{ API_URL }}>
             window.API_URL = API_URL;
+        </script>
+
+        <script>
+            // Mobile Menu Toggle
+            const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+            const mobileMenuClose = document.getElementById("mobileMenuClose");
+            const mobileMenu = document.getElementById("mobileMenu");
+            const mobileMenuOverlay =
+                document.getElementById("mobileMenuOverlay");
+
+            function openMobileMenu() {
+                mobileMenuBtn?.classList.add("active");
+                mobileMenu?.classList.add("active");
+                mobileMenuOverlay?.classList.add("active");
+                document.body.style.overflow = "hidden";
+            }
+
+            function closeMobileMenu() {
+                mobileMenuBtn?.classList.remove("active");
+                mobileMenu?.classList.remove("active");
+                mobileMenuOverlay?.classList.remove("active");
+                document.body.style.overflow = "";
+            }
+
+            mobileMenuBtn?.addEventListener("click", openMobileMenu);
+            mobileMenuClose?.addEventListener("click", closeMobileMenu);
+            mobileMenuOverlay?.addEventListener("click", closeMobileMenu);
+
+            // Close menu on escape key
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") closeMobileMenu();
+            });
         </script>
     </body>
 </html>
